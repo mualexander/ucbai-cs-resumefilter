@@ -1,0 +1,70 @@
+# ----------------------------
+# Python bytecode
+# ----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ----------------------------
+# Virtual environments
+# ----------------------------
+venv/
+.env/
+.envrc
+.venv/
+ENV/
+env/
+
+# ----------------------------
+# Jupyter Notebook
+# ----------------------------
+.ipynb_checkpoints/
+
+# ----------------------------
+# VS Code / IDE
+# ----------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ----------------------------
+# OS files
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# Logs
+# ----------------------------
+*.log
+
+# ----------------------------
+# Test / coverage artifacts
+# ----------------------------
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# ----------------------------
+# Model artifacts (optional)
+# ----------------------------
+models/
+*.joblib
+*.pkl
+
+# ----------------------------
+# Temporary exports
+# ----------------------------
+*.tmp
+*.bak
+*.swp
+
+# ----------------------------
+# Large scratch files
+# ----------------------------
+*.h5
+*.pt
+*.ckpt
+*.onnx
