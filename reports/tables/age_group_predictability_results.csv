@@ -1,0 +1,3 @@
+model_variant,accuracy,macro_f1,weighted_f1
+with_grad_year,0.9355,0.9315340470021651,0.9355635625924345
+without_grad_year,0.7295,0.7254318271128779,0.7292081108227878
