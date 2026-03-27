@@ -1,0 +1,3 @@
+model_variant,mean_delta,median_delta,pct_senior_lower
+with_grad_year,-0.190413830760637,-0.18990731394863722,1.0
+without_grad_year,-0.191131679580943,-0.19096098014863716,1.0
