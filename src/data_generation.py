@@ -138,14 +138,10 @@ ALL_DTYPES.update(DERIVED_SCHEMA_DTYPES)
 class GenerationConfig:
     n_samples: int = 10_000
     application_year: int = 2025
-    bias_strength: float = 0.10
+    bias_strength: float = 1.0
     seed: int = 42
-
-    # Age group mixture; must sum to 1.0
     p_age_groups: tuple[float, float, float, float, float] = (0.25, 0.30, 0.25, 0.15, 0.05)
-
-    # Quantile threshold for callback (lower => more callbacks)
-    callback_quantile: float = 0.60
+    callback_quantile: float = 0.55
 
 
 def apply_categories(df: pd.DataFrame, category_levels: dict | None = None) -> pd.DataFrame:
@@ -270,7 +266,11 @@ def generate_synthetic_resumes(config: GenerationConfig) -> pd.DataFrame:
 
     # --- experience: correlated with age
     # start around 22, noisy
-    years_exp = (true_age - 22 + rng.normal(0, 2.0, size=n)).clip(0, 45).astype(np.float32)
+    years_exp = np.clip(
+        (true_age - 26) * 0.75 + rng.normal(0, 3.0, size=n),
+        0,
+        30
+    ).astype(np.float32)
     df["years_experience_total"] = years_exp
     df["years_experience_relevant"] = (years_exp * rng.uniform(0.70, 1.0, size=n)).astype(np.float32)
 
@@ -296,19 +296,28 @@ def generate_synthetic_resumes(config: GenerationConfig) -> pd.DataFrame:
         0, 10
     ).astype(np.int8)
 
+    
     # --- titles correlated with experience (simple mapping)
-    def assign_title_vec(y: np.ndarray) -> np.ndarray:
+    def assign_title_vec(y: np.ndarray, rng: np.random.Generator) -> np.ndarray:
         out = np.empty(y.shape[0], dtype=object)
-        out[y < 1.0] = "Intern"
-        out[(y >= 1.0) & (y < 3.0)] = "Junior Engineer"
-        out[(y >= 3.0) & (y < 7.0)] = "Engineer"
-        out[(y >= 7.0) & (y < 12.0)] = "Senior Engineer"
-        out[(y >= 12.0) & (y < 18.0)] = "Staff Engineer"
-        out[(y >= 18.0) & (y < 25.0)] = "Engineering Manager"
-        out[y >= 25.0] = "Director"
+        for i, yrs in enumerate(y):
+            if yrs < 1:
+                out[i] = "Intern"
+            elif yrs < 3:
+                out[i] = rng.choice(["Junior Engineer", "Engineer"], p=[0.7, 0.3])
+            elif yrs < 7:
+                out[i] = rng.choice(["Engineer", "Senior Engineer"], p=[0.7, 0.3])
+            elif yrs < 12:
+                out[i] = rng.choice(["Senior Engineer", "Staff Engineer"], p=[0.7, 0.3])
+            elif yrs < 18:
+                out[i] = rng.choice(["Staff Engineer", "Engineering Manager", "Principal Engineer"], p=[0.5, 0.35, 0.15])
+            elif yrs < 25:
+                out[i] = rng.choice(["Engineering Manager", "Senior Engineering Manager", "Principal Engineer"], p=[0.45, 0.30, 0.25])
+            else:
+                out[i] = rng.choice(["Engineering Manager", "Senior Engineering Manager", "Director"], p=[0.35, 0.40, 0.25])
         return out
 
-    df["most_recent_title"] = assign_title_vec(years_exp)
+    df["most_recent_title"] = assign_title_vec(years_exp, rng)
 
     # company size: weak correlation with seniority
     size_levels = DEFAULT_CATEGORY_LEVELS["most_recent_company_size"]
@@ -326,7 +335,11 @@ def generate_synthetic_resumes(config: GenerationConfig) -> pd.DataFrame:
     df["most_recent_company_size"] = [rng.choice(size_levels, p=probs[i]) for i in range(n)]
 
     # management signal
-    mgmt_years = np.clip(years_exp - 10.0 + rng.normal(0, 1.5, size=n), 0, 30).astype(np.float32)
+    mgmt_years = np.clip(
+        0.35 * np.maximum(years_exp - 6.0, 0.0) + rng.normal(0, 1.5, size=n),
+        0,
+        12
+    ).astype(np.float32)
     df["management_years"] = mgmt_years
     df["reports_max"] = np.clip(
         (mgmt_years * rng.uniform(2, 8, size=n)) + rng.normal(0, 3, size=n),
@@ -417,21 +430,96 @@ def generate_synthetic_resumes(config: GenerationConfig) -> pd.DataFrame:
     )
     df["stability_score"] = np.clip(stability, -1.0, 2.0).astype(np.float32)
 
-    # --- label generation: callback (inject age penalty for 40+)
-    merit_score = (
-        0.35 * df["keyword_match_score"].to_numpy().astype(np.float32) +
-        0.20 * (df["tech_recency_score"].to_numpy().astype(np.float32)) +
-        0.20 * (df["years_experience_relevant"].to_numpy().astype(np.float32) / 25.0) +
-        0.15 * (df["format_clean_score"].to_numpy().astype(np.float32)) +
-        0.10 * (df["quantified_impact_count"].to_numpy().astype(np.float32) / 25.0)
+    # --- label generation: callback (Experiment A)
+    # Role-fit scoring for a frontline manager / startup-style screening scenario.
+    # The key change is that experience and management are scored by fit to a target,
+    # not by monotonic accumulation.
+
+    years_relevant = df["years_experience_relevant"].to_numpy().astype(np.float32)
+    mgmt_years = df["management_years"].to_numpy().astype(np.float32)
+    keyword_match = df["keyword_match_score"].to_numpy().astype(np.float32)
+    format_clean = df["format_clean_score"].to_numpy().astype(np.float32)
+    quantified_impact = df["quantified_impact_count"].to_numpy().astype(np.float32)
+    tech_recency = df["tech_recency_score"].to_numpy().astype(np.float32)
+    title = df["most_recent_title"].astype(str).to_numpy()
+
+    # 1) Base merit from observable resume quality
+    base_merit = (
+        0.32 * keyword_match +
+        0.22 * tech_recency +
+        0.16 * format_clean +
+        0.10 * (quantified_impact / 25.0) +
+        0.10
     )
 
-    is_40_plus = np.isin(age_groups, ["40-49", "50-59", "60+"]).astype(np.float32)
-    final_score = merit_score - (is_40_plus * np.float32(config.bias_strength))
+    # 2) Experience fit score
+    # Peak fit around ~8 years relevant experience.
+    exp_target = 6.0
+    exp_tolerance = 5.0
+    experience_fit = np.clip(
+        1.0 - np.abs(years_relevant - exp_target) / exp_tolerance,
+        0.0,
+        1.0
+    )
+    experience_fit_score = 0.10 * experience_fit
+
+    # 3) Management fit score
+    # Peak fit around ~3 years of management.
+    mgmt_target = 2.0
+    mgmt_tolerance = 2.5
+    management_fit = np.clip(
+        1.0 - np.abs(mgmt_years - mgmt_target) / mgmt_tolerance,
+        0.0,
+        1.0
+    )
+    management_fit_score = 0.05 * management_fit
+
+    # 4) Senior-title fit penalty
+    # Very senior titles are less aligned for frontline screening.
+    senior_title_penalty = np.select(
+        [
+            np.isin(title, ["Director", "VP"]),
+            np.isin(title, ["Senior Engineering Manager"]),
+            np.isin(title, ["Principal Engineer"]),
+        ],
+        [
+            0.03,
+            0.02,
+            0.01,
+        ],
+        default=0.00
+    ).astype(np.float32)
+
+    # 5) Softer graded age penalty
+    age_penalty_map = {
+        "<30": 0.00,
+        "30-39": 0.005,
+        "40-49": 0.015,
+        "50-59": 0.022,
+        "60+": 0.032,
+    }
+    age_penalty = (
+        df["age_group"].map(age_penalty_map).to_numpy().astype(np.float32)
+        * np.float32(config.bias_strength)
+    )
+
+    title_penalty = senior_title_penalty * np.float32(config.bias_strength)
+
+    # 6) Final score
+    final_score = (
+        base_merit +
+        experience_fit_score +
+        management_fit_score -
+        title_penalty -
+        age_penalty
+    )
+
+    # Add modest noise so the threshold isn't brittle
+    final_score = final_score + rng.normal(0, 0.03, size=n).astype(np.float32)
 
     threshold = np.quantile(final_score, config.callback_quantile)
     df["callback"] = pd.Series(final_score > threshold, dtype="boolean")
-
+    
     # placeholders (optional future labels)
     df["interview"] = pd.Series([pd.NA] * n, dtype="boolean")
     df["offer"] = pd.Series([pd.NA] * n, dtype="boolean")

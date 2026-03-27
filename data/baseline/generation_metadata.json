@@ -1,7 +1,7 @@
 {
     "n_samples": 10000,
     "application_year": 2025,
-    "bias_strength": 0.1,
+    "bias_strength": 1.0,
     "seed": 42,
     "p_age_groups": [
         0.25,
@@ -10,6 +10,6 @@
         0.15,
         0.05
     ],
-    "callback_quantile": 0.6,
+    "callback_quantile": 0.5,
     "description": "Synthetic resume dataset for age proxy bias experiment"
 }
