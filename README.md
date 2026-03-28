@@ -4,13 +4,14 @@
 
 This project investigates whether machine learning systems used in resume screening can produce age-related disparities **without explicitly using age as an input feature**, and whether removing obvious proxy variables (such as graduation year) is sufficient to mitigate those effects.
 
+Two complementary experiments were conducted:
+
+### 1. Supervised Screening Model (Experiment A)
+
 ![Data Generation Pipeline](reports/diagrams/data_generation_pipeline.png)
 
 *Figure 1. Synthetic data generation, label construction, and downstream evaluation pipeline.*
 
-Two complementary experiments were conducted:
-
-### 1. Supervised Screening Model (Experiment A)
 A classification model was trained to predict callback outcomes based on resume features, with age excluded from training inputs.
 
 - The model reproduced age-related disparities using proxy features.
@@ -18,8 +19,6 @@ A classification model was trained to predict callback outcomes based on resume 
 - Removing `graduation_year` had minimal impact on both performance and fairness outcomes.
 
 ### 2. Similarity-Based Screening (Experiment B)
-
-## Experiment B — Similarity-Based Screening
 
 ![Similarity-Based Screening Diagram](reports/diagrams/similarity_experiment.png)
 
