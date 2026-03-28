@@ -18,6 +18,13 @@ A classification model was trained to predict callback outcomes based on resume 
 - Removing `graduation_year` had minimal impact on both performance and fairness outcomes.
 
 ### 2. Similarity-Based Screening (Experiment B)
+
+## Experiment B — Similarity-Based Screening
+
+![Similarity-Based Screening Diagram](reports/diagrams/similarity_experiment.png)
+
+*Figure 2: Similarity-based screening can disadvantage senior candidates when the reference population is dominated by mid-career profiles.*
+
 Applicants were scored based on similarity to a reference set of historically successful employees.
 
 - No training labels were used.
@@ -41,19 +48,24 @@ Applicants were scored based on similarity to a reference set of historically su
 
 *Figure 1. Synthetic data generation, label construction, and downstream evaluation pipeline.*
 
+
+![Similarity-Based Screening Diagram](reports/diagrams/similarity_experiment.png)
+
+*Figure 2: Similarity-based screening can disadvantage senior candidates when the reference population is dominated by mid-career profiles.*
+
 ## Key Results
 
 ![False Negative Rate by Age Group](reports/figures/false_negative_rate_by_age_group.png)
 
-*Figure 2. False negative rates increase sharply for older groups, indicating that qualified older candidates are more likely to be incorrectly rejected.*
+*Figure 3. False negative rates increase sharply for older groups, indicating that qualified older candidates are more likely to be incorrectly rejected.*
 
 ![Predicted Callback Rate by Age Group](reports/figures/predicted_callback_rate_by_age_group.png)
 
-*Figure 3. The screening model reproduces substantial age-related disparities in predicted callback rates despite excluding age from training features.*
+*Figure 4. The screening model reproduces substantial age-related disparities in predicted callback rates despite excluding age from training features.*
 
 ![Equal Opportunity Difference by Age Group](reports/figures/equal_opportunity_difference_by_age_group.png)
 
-*Figure 4. Equal opportunity declines for older groups relative to the reference group, showing unequal true positive rates across ages.*
+*Figure 5. Equal opportunity declines for older groups relative to the reference group, showing unequal true positive rates across ages.*
 
 ### Conclusion
 
