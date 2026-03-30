@@ -1,70 +1,110 @@
-# ----------------------------
-# Python bytecode
-# ----------------------------
-__pycache__/
+# =========================
+
+# Python
+
+# =========================
+
+**pycache**/
 *.py[cod]
 *$py.class
 
-# ----------------------------
 # Virtual environments
-# ----------------------------
-venv/
-.env/
-.envrc
-.venv/
-ENV/
-env/
 
-# ----------------------------
-# Jupyter Notebook
-# ----------------------------
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+
+build/
+dist/
+*.egg-info/
+
+# =========================
+
+# Jupyter
+
+# =========================
+
 .ipynb_checkpoints/
 
-# ----------------------------
-# VS Code / IDE
-# ----------------------------
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
+# =========================
 
-# ----------------------------
-# OS files
-# ----------------------------
+# OS / Editor junk
+
+# =========================
+
 .DS_Store
 Thumbs.db
 
-# ----------------------------
+# VS Code
+
+.vscode/
+
+# =========================
+
 # Logs
-# ----------------------------
+
+# =========================
+
 *.log
 
-# ----------------------------
-# Test / coverage artifacts
-# ----------------------------
-.coverage
-coverage.xml
-htmlcov/
-.pytest_cache/
+# =========================
 
-# ----------------------------
-# Model artifacts (optional)
-# ----------------------------
+# Data (IMPORTANT)
+
+# =========================
+
+# Raw datasets (DO NOT COMMIT)
+
+data/raw/
+
+# Large intermediate datasets
+
+data/interim/*.parquet
+data/interim/*.csv
+
+# Optional: if you generate large experiment outputs
+
+data/experiments/*.parquet
+data/experiments/*.csv
+
+# =========================
+
+# Models / artifacts
+
+# =========================
+
 models/
-*.joblib
 *.pkl
+*.joblib
 
-# ----------------------------
-# Temporary exports
-# ----------------------------
+# =========================
+
+# Temporary files
+
+# =========================
+
 *.tmp
-*.bak
-*.swp
+*.temp
 
-# ----------------------------
-# Large scratch files
-# ----------------------------
-*.h5
-*.pt
-*.ckpt
-*.onnx
+# =========================
+
+# Keep important outputs
+
+# =========================
+
+# Allow figures to be committed
+
+!reports/figures/
+!reports/figures/**/*.png
+
+# Allow diagrams
+
+!reports/diagrams/
+!reports/diagrams/**/*.png
+
+# Allow small tables if any
+
+!reports/tables/
