@@ -1,0 +1,4 @@
+generation_mode,rows,unique_candidates,nonempty_resumes,generation_error_rows,mean_generated_words,median_generated_words,min_generated_words,max_generated_words
+minimal_proxy,1000,1000,1000,0,73.885,74.0,51,130
+with_proxies,1000,1000,1000,0,108.849,109.0,57,158
+without_direct_age_proxies,1000,1000,1000,0,108.905,109.0,62,160

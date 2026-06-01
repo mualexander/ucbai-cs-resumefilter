@@ -42,6 +42,10 @@ Thumbs.db
 
 .vscode/
 
+# Phoenix Code
+.phcode.json
+phcode.json
+
 # =========================
 
 # Logs
@@ -56,19 +60,16 @@ Thumbs.db
 
 # =========================
 
-# Raw datasets (DO NOT COMMIT)
+# Large / externally sourced data
+data/external/resume_dataset.csv
 
+# Large generated external-resume scoring outputs
+data/experiments/external_resume_career_stage_scored.csv
+data/experiments/external_resume_career_stage_scored.parquet
+
+# Local raw CPS/IPUMS extracts, if present
 data/raw/
-
-# Large intermediate datasets
-
-data/interim/*.parquet
-data/interim/*.csv
-
-# Optional: if you generate large experiment outputs
-
-data/experiments/*.parquet
-data/experiments/*.csv
+data/processed/
 
 # =========================
 

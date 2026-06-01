@@ -1,0 +1,16 @@
+generation_mode,age_group,rows,screened_in,screen_rate,mean_similarity
+minimal_proxy,30-39,200,53,0.265,0.5864252
+minimal_proxy,40-49,200,84,0.42,0.6059728
+minimal_proxy,50-59,200,126,0.63,0.63251144
+minimal_proxy,60+,200,129,0.645,0.6365
+minimal_proxy,<30,200,58,0.29,0.58712244
+with_proxies,30-39,200,61,0.305,0.6034064
+with_proxies,40-49,200,102,0.51,0.63046545
+with_proxies,50-59,200,128,0.64,0.6508323
+with_proxies,60+,200,115,0.575,0.6404222
+with_proxies,<30,200,44,0.22,0.5945609
+without_direct_age_proxies,30-39,200,60,0.3,0.6063805
+without_direct_age_proxies,40-49,200,98,0.49,0.63527447
+without_direct_age_proxies,50-59,200,126,0.63,0.6511058
+without_direct_age_proxies,60+,200,125,0.625,0.6465471
+without_direct_age_proxies,<30,200,41,0.205,0.5972373

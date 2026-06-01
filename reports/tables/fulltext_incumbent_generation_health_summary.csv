@@ -1,0 +1,7 @@
+population,generation_mode,rows,unique_candidates,nonempty_resumes,generation_error_rows,mean_generated_words,median_generated_words,min_generated_words,max_generated_words
+candidate,minimal_proxy,1000,1000,1000,0,73.885,74.0,51,130
+candidate,with_proxies,1000,1000,1000,0,108.849,109.0,57,158
+candidate,without_direct_age_proxies,1000,1000,1000,0,108.905,109.0,62,160
+reference_employee,minimal_proxy,500,500,500,0,75.506,75.0,54,126
+reference_employee,with_proxies,500,500,500,0,114.016,114.0,84,157
+reference_employee,without_direct_age_proxies,500,500,500,0,113.73,114.0,80,149

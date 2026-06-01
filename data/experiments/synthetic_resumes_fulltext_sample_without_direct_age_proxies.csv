@@ -1,0 +1,614 @@
+candidate_id,application_year,target_role_family,target_role_level,region,age_group,true_age,highest_degree,school_tier,graduation_year,gpa_bucket,years_experience_total,years_experience_relevant,num_employers,avg_tenure_years,months_since_last_role,num_gaps_over_6mo,most_recent_title,most_recent_company_size,management_years,reports_max,num_skills_listed,num_programming_languages,num_cloud_platforms,num_databases,skill_python,skill_java,skill_javascript,skill_go,skill_kubernetes,skill_aws,skill_gcp,skill_azure,skill_sql,skill_spark,skill_terraform,skill_linux,skill_ml,modern_tech_count,legacy_tech_count,cert_count,has_top_cloud_cert,github_url_present,portfolio_url_present,open_source_mentions,patent_count,resume_word_count,bullet_count,quantified_impact_count,keyword_match_score,format_clean_score,salary_expectation_usd,willing_to_relocate,remote_only,estimated_start_year,tech_recency_score,leadership_signal_score,stability_score,callback,interview,offer,generation_mode,resume_text,llm_model,prompt_version,generated_at,generation_error
+cand_000000,2025,SWE,Senior,US-West,30-39,31,None,4,2016,3.0-3.4,6.132674,4.701494,1,2.7328143,0,0,Senior Engineer,1000+,0.0,0,19,3,0,2,True,True,False,False,True,True,False,False,False,False,True,False,False,3,0,3,False,True,False,True,1,517,28,0,0.636386,0.79688525,121909,False,False,2019,0.5072772,0.0,0.3188283,False,,,without_direct_age_proxies,"Logan Garcia
+
+Summary  
+Software Engineer with over 6 years of experience, including 4 years in relevant roles. Proven expertise in Python, Java, Kubernetes, AWS, and Terraform. Strong background in software development and engineering practices.
+
+Skills  
+- Programming Languages: Python, Java  
+- Cloud Technologies: Kubernetes, AWS  
+- Infrastructure as Code: Terraform  
+- Databases: 2  
+
+Experience  
+Senior Engineer  
+- Contributed to software development in a large organization with over 1000 employees.  
+- Engaged in open source projects and contributed to community-driven initiatives.  
+- Holder of 1 patent, demonstrating innovation and technical expertise.  
+
+Certifications  
+3 certifications  
+
+Links  
+GitHub: https://github.com/logangarcia959",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:54:31.524026+00:00,
+cand_000001,2025,IT,Mid,UK,<30,22,AA,1,2024,3.0-3.4,0.0,0.0,0,3.769562,0,0,Intern,201-1000,0.0,0,15,4,0,3,False,False,True,False,True,True,False,False,False,False,True,True,False,6,0,2,False,False,False,True,0,613,21,3,0.74213374,0.8070887,50000,True,False,2025,0.7084268,0.0,0.4397822,True,,,without_direct_age_proxies,"Reese Wilson
+
+Summary  
+Motivated software engineering intern with a foundational understanding of modern technologies and programming languages. Eager to contribute to innovative projects and enhance technical skills in a dynamic environment.
+
+Skills  
+- JavaScript  
+- Kubernetes  
+- AWS  
+- Terraform  
+- Linux  
+- Additional skills in programming languages and databases.
+
+Experience  
+Intern  
+Most recent experience in a mid-sized company with a focus on software development and deployment. 
+
+Education  
+Associate Degree  
+Tier 1 institution with a GPA between 3.0 and 3.4.
+
+Certifications  
+2 certifications.
+
+Links  
+Open source contributions acknowledged.",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:54:33.255926+00:00,
+cand_000002,2025,Security,Staff,US-East,30-39,35,PhD,2,2011,unknown,10.665197,7.683765,2,2.6636188,0,0,Staff Engineer,11-50,0.8174413,2,31,1,1,2,True,False,True,True,False,False,True,False,True,True,False,True,True,5,0,3,False,False,False,False,0,921,11,1,0.65596163,0.7530828,145311,False,False,2014,0.6311923,0.02852324,0.31075552,True,,,without_direct_age_proxies,"Rowan Martinez
+
+Summary  
+Experienced Staff Engineer with over 10 years in software engineering, specializing in security. Proven track record in developing robust solutions using modern technologies. Strong background in Python, JavaScript, Go, and cloud platforms.
+
+Skills  
+- Programming Languages: Python, JavaScript, Go  
+- Cloud Platforms: GCP  
+- Databases: SQL, Spark  
+- Operating Systems: Linux  
+- Other: Machine Learning  
+
+Experience  
+- Staff Engineer  
+  - Developed and maintained security solutions for a mid-sized company, leveraging modern technologies to enhance system integrity and performance.  
+  - Collaborated with cross-functional teams to implement best practices in software development and security protocols.  
+
+Education  
+- PhD  
+
+Certifications  
+- 3 certifications  
+
+Links",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:54:35.405422+00:00,
+cand_000003,2025,PM,Staff,UK,50-59,53,AA,1,1993,unknown,18.720734,15.248029,3,2.6018739,0,1,Engineering Manager,11-50,4.920259,34,17,5,2,2,True,False,True,False,True,False,False,False,True,False,True,True,False,3,0,1,False,True,True,False,0,892,38,4,0.6701261,0.93509954,242766,False,False,2006,0.5140252,0.21560778,0.24355194,False,,,without_direct_age_proxies,"Jordan Young
+
+Summary  
+Results-driven Engineering Manager with over 18 years of experience in software engineering and management. Proven track record in leading teams and delivering high-quality software solutions. Strong expertise in Python, JavaScript, Kubernetes, SQL, Terraform, and Linux.
+
+Skills  
+- Programming Languages: Python, JavaScript  
+- Cloud Platforms: Kubernetes  
+- Databases: SQL  
+- Infrastructure as Code: Terraform  
+- Operating Systems: Linux  
+- Additional Skills: 11 other skills listed  
+
+Experience  
+- Engineering Manager  
+  Managed a team of up to 34 reports in a company with 11-50 employees. Over 4 years of management experience, leading projects and driving team performance.
+
+Education  
+- Associate's Degree  
+
+Certifications  
+- 1 certification  
+
+Links  
+- GitHub: https://github.com/jordanyoung481  
+- Portfolio: https://jordanyoung481.dev",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:54:39.091614+00:00,
+cand_000004,2025,PM,Mid,EU,30-39,33,HS,3,2013,unknown,5.18959,3.7011647,1,1.0666473,25,3,Engineer,11-50,0.0,0,13,4,2,4,False,False,True,True,False,True,False,True,True,False,False,True,True,2,0,2,False,False,True,False,0,746,68,6,0.54015774,0.7090202,93707,True,True,2020,0.40719822,0.0,-0.055557825,False,,,without_direct_age_proxies,"Cameron Patel
+
+Summary  
+Software Engineer with over 5 years of experience, including 3 years in relevant roles. Proficient in a variety of programming languages and cloud platforms, with a strong foundation in machine learning and database management.
+
+Skills  
+- JavaScript  
+- Go  
+- AWS  
+- Azure  
+- SQL  
+- Linux  
+- Machine Learning  
+
+Experience  
+- Most recent title: Engineer  
+- Experience with a company size of 11-50 employees  
+- Total years of experience: 5+ years  
+- Relevant experience: 3+ years  
+- Average tenure: 1 year  
+
+Certifications  
+- 2 certifications  
+
+Links",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:54:41.550761+00:00,
+cand_000005,2025,Sales,Manager,US-East,<30,29,Bootcamp,2,2017,unknown,1.4124315,1.411503,0,3.2136512,0,0,Junior Engineer,11-50,0.0,3,35,6,1,1,True,False,False,False,True,True,False,True,True,False,True,True,False,2,0,0,False,True,False,False,0,675,33,7,0.9244867,0.6579014,100124,False,False,2024,0.50489736,0.006,0.37492597,True,,,without_direct_age_proxies,"Cameron Lee
+
+Summary  
+Detail-oriented Junior Engineer with over a year of experience in software development. Proficient in cloud technologies and skilled in various programming languages. Strong problem-solving abilities and a passion for continuous learning.
+
+Skills  
+- Programming Languages: Python, SQL  
+- Cloud Platforms: AWS, Azure  
+- Containerization: Kubernetes  
+- Infrastructure as Code: Terraform  
+- Operating Systems: Linux  
+- Additional Skills: 35 total skills listed  
+
+Experience  
+- Junior Engineer  
+  - Contributed to software development projects in a small team environment.  
+  - Collaborated with team members to improve system performance and reliability.  
+  - Assisted in the deployment and management of applications using Kubernetes and AWS.  
+
+Education  
+- Bootcamp  
+
+Certifications  
+- 0 certifications  
+
+Links  
+- GitHub: https://github.com/cameronlee148",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:54:45.237679+00:00,
+cand_000006,2025,SWE,Staff,Canada,30-39,37,HS,5,2011,<3.0,14.301158,13.738739,2,4.1395097,10,0,Staff Engineer,1000+,1.9061801,3,10,4,1,2,True,False,False,True,True,False,False,True,True,False,True,True,False,4,0,2,False,True,True,False,0,484,56,0,0.8799281,0.7063002,147064,False,False,2011,0.6076523,0.0631854,0.4829428,True,,,without_direct_age_proxies,"Quinn Moore
+
+Summary  
+Experienced Staff Engineer with over 14 years in software engineering, specializing in Python, Go, and cloud technologies. Proven track record in leading teams and delivering high-quality software solutions.
+
+Skills  
+- Programming Languages: Python, Go  
+- Cloud Platforms: Azure  
+- Databases: SQL  
+- Tools & Technologies: Kubernetes, Terraform, Linux  
+- Total Skills: 10  
+
+Experience  
+- Staff Engineer  
+  - Led engineering teams in a large organization with over 1000 employees.  
+  - Managed a team of up to 3 direct reports.  
+  - Over 13 years of relevant experience in software engineering.  
+
+Education  
+- High School Diploma  
+
+Certifications  
+- 2 certifications  
+
+Links",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:54:47.962586+00:00,
+cand_000007,2025,Security,Entry,US-West,60+,66,None,4,1980,unknown,28.104473,26.856953,5,4.084025,7,0,Director,201-1000,8.13125,39,19,4,0,0,True,False,False,False,True,True,False,False,False,False,False,False,False,2,5,2,False,True,False,False,0,435,29,2,0.9144929,0.7290128,289734,False,False,1997,0.49706525,0.3219375,0.47646955,False,,,without_direct_age_proxies,"Dakota Clark
+
+Summary  
+Results-driven software engineer with over 28 years of experience, including 26 years in relevant roles. Proven leadership skills with over 8 years in management, overseeing teams of up to 39 reports. Strong expertise in security-focused software development and cloud technologies.
+
+Skills  
+- Python  
+- Kubernetes  
+- AWS  
+- Additional skills: 16 more programming languages and technologies, including 5 legacy technologies and 2 modern technologies.
+
+Experience  
+- Director at a mid-sized company (201-1000 employees)  
+  - Led software development initiatives with a focus on security, managing a diverse team and driving project success.
+
+Certifications  
+- 2 certifications in relevant fields.
+
+Links",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:54:50.267420+00:00,
+cand_000008,2025,SRE,Director,UK,30-39,31,AA,5,2016,3.0-3.4,7.613249,5.8003874,1,2.0801892,0,0,Staff Engineer,11-50,0.0,1,27,1,1,2,True,True,False,False,True,False,False,False,True,False,True,True,False,4,0,0,False,False,False,False,0,611,48,5,0.45517692,0.69692695,139264,False,False,2017,0.53103536,0.002,0.24268873,False,,,without_direct_age_proxies,"Hayden Patel
+
+Summary  
+Results-driven software engineer with over 7 years of experience, including 5 years in relevant roles. Proven expertise in developing and maintaining scalable systems, with a strong focus on site reliability engineering. Adept at collaborating with cross-functional teams to deliver high-quality solutions.
+
+Skills  
+- Programming Languages: Python, Java  
+- Cloud Platforms: Kubernetes  
+- Databases: SQL  
+- Infrastructure as Code: Terraform  
+- Operating Systems: Linux  
+- Additional Skills: 22 other technical skills  
+
+Experience  
+Staff Engineer  
+- Developed and maintained robust applications, ensuring high availability and performance.  
+- Collaborated with teams to implement infrastructure as code practices using Terraform.  
+- Managed database systems, optimizing queries and performance.  
+- Contributed to the deployment and management of applications on Kubernetes.  
+
+Education  
+Associate Degree  
+
+Certifications  
+0 Certifications  
+
+Links",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:54:53.735841+00:00,
+cand_000009,2025,SWE,Entry,US-Central,30-39,32,None,3,2016,unknown,0.40995142,0.35691205,1,3.3212006,10,2,Intern,51-200,0.0,3,26,1,2,1,True,False,True,False,True,True,True,False,True,False,False,False,False,4,0,2,False,True,False,False,0,488,30,7,0.9710731,0.6700809,80150,False,True,2025,0.6258813,0.006,0.2674734,True,,,without_direct_age_proxies,"Avery Singh
+
+Summary  
+Motivated software engineering intern with experience in Python, JavaScript, and cloud technologies. Strong understanding of Kubernetes, AWS, and GCP. Eager to contribute to innovative projects and further develop technical skills.
+
+Skills  
+- Programming Languages: Python, JavaScript  
+- Cloud Platforms: AWS, GCP  
+- Databases: SQL  
+- Containerization: Kubernetes  
+- Additional Skills: 26 total skills listed  
+
+Experience  
+Intern  
+- Gained hands-on experience in software development and cloud technologies.  
+- Collaborated with a team of up to 3 members in a mid-sized company (51-200 employees).  
+
+Certifications  
+2 certifications obtained.  
+
+Links",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:54:55.989309+00:00,
+cand_000010,2025,PM,Staff,Canada,<30,26,MS,3,2020,3.5-3.7,0.30082694,0.28891036,2,1.363391,20,1,Intern,51-200,2.0853999,16,16,3,1,1,True,False,True,False,False,False,False,True,True,False,True,False,False,6,0,2,False,False,False,True,0,458,19,5,0.723462,0.85322034,81313,False,True,2025,0.6880258,0.09456201,0.099062294,True,,,without_direct_age_proxies,"Casey Garcia
+
+Summary  
+Detail-oriented software engineer with experience in Python, JavaScript, and cloud technologies. Proven ability to work collaboratively in team environments and manage multiple projects effectively.
+
+Skills  
+- Programming Languages: Python, JavaScript  
+- Cloud Platforms: Azure  
+- Databases: SQL  
+- Infrastructure as Code: Terraform  
+- Additional Skills: 16 total skills listed, including modern technologies  
+
+Experience  
+Intern  
+- Contributed to software development projects, collaborating with teams to deliver high-quality solutions.  
+- Managed a team of up to 16 reports, demonstrating leadership and project management skills.  
+
+Education  
+Master's Degree  
+
+Certifications  
+2 certifications  
+
+Links",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:54:58.241987+00:00,
+cand_000011,2025,Sales,Senior,US-East,30-39,32,BS,5,2015,3.8+,3.9552214,3.2182372,2,1.5126427,3,1,Engineer,51-200,0.0,0,25,6,3,2,True,False,False,False,True,True,False,False,False,False,True,True,True,5,0,1,True,True,False,True,0,693,36,4,0.9154629,0.65636194,105124,True,False,2021,0.6805926,0.0,0.11647497,True,,,without_direct_age_proxies,"Emerson Brown
+
+Summary  
+Software engineer with nearly 4 years of experience, specializing in Python, Kubernetes, AWS, and Terraform. Proven ability to leverage machine learning techniques to enhance system performance and efficiency. Strong background in cloud platforms and modern technologies.
+
+Skills  
+- Programming Languages: Python, and 5 others  
+- Cloud Platforms: AWS, and 2 others  
+- Databases: 2  
+- Modern Technologies: Kubernetes, Terraform, Linux, machine learning  
+
+Experience  
+- Engineer at a mid-sized company (51-200 employees)  
+  - Developed and maintained cloud-based applications using AWS and Kubernetes.  
+  - Implemented infrastructure as code using Terraform, improving deployment efficiency.  
+  - Collaborated with cross-functional teams to integrate machine learning models into existing systems.  
+
+Education  
+- Bachelor of Science  
+
+Certifications  
+- 1 certification  
+- Top cloud certification  
+
+Links  
+- GitHub: https://github.com/emersonbrown914",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:00.801612+00:00,
+cand_000012,2025,IT,Staff,US-Central,50-59,56,Bootcamp,4,1990,unknown,19.437374,13.810311,3,2.2330515,11,0,Senior Engineering Manager,51-200,5.9006042,39,10,3,0,1,True,False,True,True,True,True,True,True,True,False,True,True,False,5,1,3,False,True,False,False,0,889,24,8,0.8366399,0.7491949,215687,False,False,2006,0.65816134,0.25501814,0.26052266,True,,,without_direct_age_proxies,"Morgan Kim
+
+Summary  
+Experienced software engineering professional with over 19 years in the IT industry, including 13 years in relevant roles. Proven leadership as a Senior Engineering Manager, overseeing teams of up to 39 reports. Strong expertise in modern technologies and cloud platforms, with a focus on delivering impactful solutions.
+
+Skills  
+- Programming Languages: Python, JavaScript, Go  
+- Cloud Platforms: AWS, GCP, Azure  
+- Containerization: Kubernetes  
+- Infrastructure as Code: Terraform  
+- Databases: SQL  
+- Operating Systems: Linux  
+
+Experience  
+- Senior Engineering Manager  
+  Managed engineering teams and projects, driving successful outcomes and fostering a collaborative environment.  
+
+Certifications  
+- 3 certifications  
+
+Links",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:03.157388+00:00,
+cand_000013,2025,IT,Manager,Canada,40-49,47,HS,5,1999,3.5-3.7,13.756631,11.364154,6,2.0970209,2,0,Staff Engineer,201-1000,1.0394661,0,29,7,3,2,True,False,True,False,True,True,True,False,False,True,False,True,False,5,1,1,False,False,True,False,0,534,27,2,0.7714688,0.694045,189555,False,False,2011,0.6526271,0.031183984,0.24465244,True,,,without_direct_age_proxies,"Kai Johnson
+
+Summary  
+Results-driven software engineer with over 13 years of experience in IT, specializing in cloud platforms and modern technologies. Proven ability to lead teams and manage projects effectively, with a strong background in Python, JavaScript, and Kubernetes.
+
+Skills  
+- Programming Languages: Python, JavaScript  
+- Cloud Platforms: AWS, GCP  
+- Technologies: Kubernetes, Spark, Linux  
+- Additional Skills: 29 total skills listed, including legacy and modern technologies  
+
+Experience  
+- Staff Engineer at a mid-sized company (201-1000 employees)  
+  - Over 11 years of relevant experience in software engineering  
+  - Managed teams for over a year, demonstrating leadership capabilities  
+  - Contributed to various projects, enhancing system performance and reliability  
+
+Education  
+- High School Diploma  
+
+Certifications  
+- 1 certification  
+
+Links",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:06.023619+00:00,
+cand_000014,2025,IT,Manager,US-East,30-39,39,HS,5,2008,3.0-3.4,11.259202,10.894412,3,3.2319922,7,2,Staff Engineer,1000+,4.1026096,16,20,2,1,3,False,True,False,False,False,True,False,False,False,True,True,True,False,4,1,2,False,True,True,True,0,654,13,4,0.5200049,0.9376777,131081,True,False,2014,0.53816766,0.15507829,0.25706574,False,,,without_direct_age_proxies,"Finley Lee
+
+Summary  
+Experienced software engineer with over 11 years in the IT industry, specializing in cloud technologies and software development. Proven track record of managing teams and delivering high-quality solutions. Strong expertise in Java, AWS, and modern development practices.
+
+Skills  
+- Java  
+- AWS  
+- Spark  
+- Terraform  
+- Linux  
+- Additional skills: 15 more, including 2 programming languages, 1 cloud platform, and 3 databases.
+
+Experience  
+- Staff Engineer  
+  - Led a team of up to 16 reports, with over 4 years of management experience in a large organization (1000+ employees).  
+  - Contributed to multiple projects, leveraging cloud technologies and modern software practices.
+
+Education  
+- High School Diploma  
+
+Certifications  
+- 2 certifications  
+
+Links",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:08.892371+00:00,
+cand_000015,2025,IT,Staff,Other,50-59,52,MS,1,1995,3.5-3.7,18.490606,13.5598345,4,3.6872296,0,0,Senior Engineering Manager,1000+,1.008016,7,31,2,0,3,True,False,False,False,True,False,False,False,True,False,False,True,False,2,0,1,False,True,False,False,0,319,30,8,0.845603,0.6235676,223062,False,False,2007,0.4891206,0.044240482,0.43017676,False,,,without_direct_age_proxies,"Hayden Thomas
+
+Summary  
+Experienced Senior Engineering Manager with over 18 years in the IT sector, specializing in software development and team leadership. Proven ability to manage teams and projects effectively, with a strong background in Python, Kubernetes, SQL, and Linux.
+
+Skills  
+- Programming Languages: Python, SQL  
+- Technologies: Kubernetes, Linux  
+- Databases: 3  
+- Total Skills Listed: 31  
+
+Experience  
+- Senior Engineering Manager  
+  Managed a team of up to 7 engineers in a company with over 1000 employees. Demonstrated leadership and project management skills over a tenure of nearly 1 year in a management role.
+
+Education  
+- Master of Science  
+
+Certifications  
+- 1 certification  
+
+Links  
+- GitHub: https://github.com/haydenthomas575",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:11.350312+00:00,
+cand_000016,2025,PM,Director,US-Central,30-39,35,MS,2,2013,unknown,3.8544624,2.7992485,3,2.1667018,3,0,Senior Engineer,1000+,0.0,0,27,4,1,2,True,True,False,True,True,False,False,True,True,False,True,False,True,4,0,1,False,True,True,False,0,537,27,4,0.72409356,0.6443152,99536,False,False,2021,0.5823187,0.0,0.25278187,False,,,without_direct_age_proxies,"Morgan Thomas
+
+Summary  
+Software Engineer with nearly 4 years of experience, specializing in Python, Java, Go, and cloud technologies. Proven ability to develop and implement solutions in Kubernetes and Azure environments. Strong background in machine learning and database management.
+
+Skills  
+- Programming Languages: Python, Java, Go  
+- Cloud Platforms: Azure  
+- Databases: SQL  
+- Infrastructure as Code: Terraform  
+- Containerization: Kubernetes  
+- Machine Learning  
+
+Experience  
+- Senior Engineer at a company with over 1000 employees  
+  - Developed and maintained scalable applications using modern programming languages and cloud technologies.  
+  - Collaborated with cross-functional teams to enhance system performance and reliability.  
+
+Education  
+- Master of Science  
+
+Certifications  
+- 1 certification  
+
+Links  
+- GitHub: https://github.com/morganthomas863  
+- Portfolio: https://morganthomas863.dev",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:13.706396+00:00,
+cand_000017,2025,SWE,Manager,US-East,50-59,59,AA,4,1988,3.5-3.7,27.443327,24.136333,9,4.5702467,4,0,Senior Engineering Manager,51-200,8.12581,39,40,3,0,1,False,True,False,True,True,True,False,False,False,False,True,True,False,4,2,1,False,True,False,False,0,638,26,4,0.81321055,0.88490254,285901,True,False,1998,0.5993088,0.3217743,0.53319544,False,,,without_direct_age_proxies,"Kai Martinez
+
+Summary  
+Experienced software engineering manager with over 27 years in the industry, including 24 years of relevant experience. Proven track record in leading engineering teams and managing complex projects. Strong expertise in modern technologies and cloud platforms.
+
+Skills  
+- Programming Languages: Java, Go  
+- Technologies: Kubernetes, AWS, Terraform, Linux  
+- Additional Skills: 40 total skills listed, including 1 database and 2 legacy technologies  
+
+Experience  
+- Senior Engineering Manager  
+  Managed teams of up to 39 engineers, with over 8 years of management experience across 9 employers. Demonstrated ability to drive projects to successful completion while fostering team collaboration and innovation.
+
+Education  
+- Associate of Arts  
+
+Certifications  
+- 1 certification  
+
+Links",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:15.855640+00:00,
+cand_000018,2025,IT,Manager,EU,<30,29,Bootcamp,1,2017,unknown,2.1864388,1.6792842,0,1.968638,0,0,Junior Engineer,1000+,0.0,0,21,3,0,1,False,True,False,False,True,False,False,False,True,False,True,True,False,6,0,3,False,True,False,False,0,611,22,4,0.7793135,0.9595198,109663,False,True,2023,0.7158627,0.0,0.22967441,True,,,without_direct_age_proxies,"Reese Lewis
+
+Summary  
+Detail-oriented Junior Engineer with over 2 years of experience in software development. Proficient in Java, Kubernetes, SQL, Terraform, and Linux. Strong problem-solving skills and a commitment to delivering high-quality software solutions.
+
+Skills  
+- Java  
+- Kubernetes  
+- SQL  
+- Terraform  
+- Linux  
+- Additional skills: 16 more technical skills  
+
+Experience  
+- Junior Engineer at a company with 1000+ employees  
+  - Developed and maintained software applications using Java and SQL.  
+  - Implemented infrastructure as code using Terraform and managed container orchestration with Kubernetes.  
+  - Collaborated with cross-functional teams to enhance system performance and reliability.  
+
+Education  
+- Bootcamp  
+
+Certifications  
+- 3 certifications  
+
+Links  
+- GitHub: https://github.com/reeselewis732",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:18.620469+00:00,
+cand_000019,2025,PM,Senior,US-Central,30-39,31,PhD,1,2015,unknown,4.743642,3.873805,0,3.6817658,15,1,Engineer,201-1000,0.054894913,0,30,2,1,0,True,True,True,True,False,True,False,False,False,False,True,True,False,7,0,1,False,False,False,True,0,555,19,6,0.46377924,0.7910716,79314,False,False,2020,0.7002559,0.0016468475,0.36953932,False,,,without_direct_age_proxies,"Drew Young
+
+Summary  
+Software engineer with nearly 5 years of experience, specializing in Python, Java, and JavaScript. Proven ability to develop and implement solutions in cloud environments, particularly with AWS and Terraform. Strong background in Linux systems and modern software development practices.
+
+Skills  
+- Programming Languages: Python, Java, JavaScript, Go  
+- Cloud Platforms: AWS  
+- Tools & Technologies: Terraform, Linux  
+- Additional Skills: 30 total skills listed  
+
+Experience  
+- Engineer at a mid-sized company (201-1000 employees)  
+  - Developed and maintained software solutions using Python and Java.  
+  - Collaborated with cross-functional teams to deliver projects on time.  
+
+Education  
+- PhD  
+
+Certifications  
+- 1 certification  
+
+Links  
+- Open source contributions recognized in the community.",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:21.078366+00:00,
+cand_000020,2025,PM,Mid,Canada,50-59,54,MS,1,1993,3.8+,24.279537,19.904312,5,2.5311089,3,0,Engineering Manager,1000+,5.328122,26,32,3,2,2,True,True,True,True,False,True,False,True,True,False,True,True,False,2,4,1,False,True,False,False,0,640,10,2,0.7682559,0.8069136,271856,True,False,2001,0.47115117,0.21184368,0.29529604,False,,,without_direct_age_proxies,"Dakota Young
+
+Summary  
+Experienced Engineering Manager with over 24 years in the software engineering field, including nearly 20 years of relevant experience. Proven track record in managing teams and delivering high-quality software solutions. Strong expertise in multiple programming languages and cloud platforms.
+
+Skills  
+- Programming Languages: Python, Java, JavaScript, Go  
+- Cloud Platforms: AWS, Azure  
+- Databases: SQL  
+- Infrastructure as Code: Terraform  
+- Operating Systems: Linux  
+- Additional Skills: 32 total skills including legacy and modern technologies  
+
+Experience  
+- Most recent title: Engineering Manager  
+- Management experience: Over 5 years, managing teams of up to 26 reports  
+- Experience across 5 employers with an average tenure of over 2.5 years  
+
+Education  
+- Master’s Degree from a Tier 1 school  
+- GPA: 3.8+  
+
+Certifications  
+- 1 certification  
+
+Links  
+GitHub: https://github.com/dakotayoung596",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:24.150558+00:00,
+cand_000021,2025,Data,Mid,UK,50-59,57,PhD,1,1989,3.8+,27.88744,25.377476,9,2.9609199,2,0,Senior Engineering Manager,51-200,8.6044445,33,26,3,1,2,True,False,True,False,True,False,False,True,True,False,True,True,False,5,2,1,False,True,False,True,0,804,28,2,0.9785591,0.91929656,295107,False,False,1997,0.6940452,0.32413337,0.34544066,True,,,without_direct_age_proxies,"Skyler Chen
+
+Summary  
+Experienced software engineering professional with over 27 years in the industry, including 25 years of relevant experience. Proven track record in managing engineering teams and delivering high-quality software solutions. Strong expertise in cloud platforms, programming languages, and modern technologies.
+
+Skills  
+- Programming Languages: Python, JavaScript  
+- Cloud Platforms: Azure  
+- Databases: SQL  
+- Technologies: Kubernetes, Terraform, Linux  
+- Additional Skills: 26 total skills listed, including legacy and modern technologies  
+
+Experience  
+- Senior Engineering Manager  
+  Managed a team of up to 33 engineers in a mid-sized company. Over 8 years of management experience, focusing on team development and project delivery.
+
+Education  
+- PhD  
+  Top-tier institution with a GPA of 3.8+  
+
+Certifications  
+- 1 certification  
+
+Links  
+- GitHub: https://github.com/skylerchen611",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:26.608301+00:00,
+cand_000022,2025,SRE,Staff,US-West,40-49,49,BS,4,1997,unknown,10.391783,7.362111,2,2.8840106,1,0,Staff Engineer,51-200,0.0,0,15,7,2,1,True,False,True,False,True,True,False,False,True,False,True,True,True,3,2,0,False,True,True,True,0,487,30,3,0.6307136,0.99698365,147585,True,False,2015,0.5053094,0.0,0.3364679,True,,,without_direct_age_proxies,"Hayden Young
+
+Summary  
+Results-driven Staff Engineer with over 10 years of experience in software engineering, specializing in site reliability engineering. Proven expertise in cloud platforms, container orchestration, and machine learning. Strong background in Python and JavaScript development, with a focus on building scalable and efficient systems.
+
+Skills  
+- Programming Languages: Python, JavaScript  
+- Cloud Platforms: AWS  
+- Containerization: Kubernetes  
+- Infrastructure as Code: Terraform  
+- Databases: SQL  
+- Operating Systems: Linux  
+- Machine Learning  
+- Additional Skills: 8 other relevant technologies  
+
+Experience  
+Staff Engineer  
+- Developed and maintained cloud-based applications, ensuring high availability and performance.  
+- Implemented infrastructure as code using Terraform, streamlining deployment processes.  
+- Collaborated with cross-functional teams to enhance system reliability and scalability.  
+
+Education  
+Bachelor of Science  
+
+Certifications  
+0 certifications  
+
+Links  
+GitHub: https://github.com/haydenyoung395  
+Portfolio: https://haydenyoung395.dev",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:29.271544+00:00,
+cand_000023,2025,Sales,Staff,EU,40-49,49,BS,2,1998,unknown,16.927704,15.19656,4,3.6532588,0,1,Staff Engineer,1000+,5.398479,35,12,6,0,3,True,True,True,False,False,False,False,False,False,False,True,False,False,3,0,0,False,False,True,False,0,474,50,1,0.8193948,0.9123823,215717,False,False,2008,0.543879,0.23195437,0.36621353,False,,,without_direct_age_proxies,"Rowan Nguyen
+
+Summary  
+Experienced Staff Engineer with over 16 years in software development, specializing in Python, Java, JavaScript, and Terraform. Proven track record in leading teams and managing projects, with a strong focus on delivering high-quality software solutions.
+
+Skills  
+- Programming Languages: Python, Java, JavaScript, and others  
+- Databases: 3  
+- Modern Technologies: 3  
+
+Experience  
+- Staff Engineer at a company with 1000+ employees  
+  - Over 15 years of relevant experience in software engineering  
+  - Managed teams with up to 35 reports  
+  - 5 years of management experience  
+
+Education  
+- Bachelor of Science  
+
+Certifications  
+- 0 certifications  
+
+Links",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:31.216147+00:00,
+cand_000024,2025,IT,Entry,US-West,50-59,57,BS,5,1989,3.8+,18.21924,15.434662,2,2.7476556,2,0,Engineering Manager,11-50,7.34189,49,10,5,1,3,False,True,False,False,True,False,False,False,False,True,False,True,False,5,3,0,False,True,False,True,0,878,21,5,0.64583904,0.8144665,222485,True,False,2007,0.62750113,0.3182567,0.32055983,False,,,without_direct_age_proxies,"Cameron Johnson
+
+Summary  
+Results-driven software engineer with over 18 years of experience in IT, including 15 years in relevant roles. Proven leadership skills with a track record of managing teams and delivering impactful projects. Strong expertise in modern technologies and cloud platforms.
+
+Skills  
+- Java  
+- Kubernetes  
+- Spark  
+- Linux  
+- Additional skills in programming languages, cloud platforms, and databases.
+
+Experience  
+- Engineering Manager  
+  Managed a team of up to 49 reports in a mid-sized company. Demonstrated strong leadership and project management capabilities over 7 years of management experience.
+
+Education  
+- Bachelor of Science  
+
+Certifications  
+- 0 certifications  
+
+Links  
+- GitHub: https://github.com/cameronjohnson128",gpt-4o-mini,v3_schema_aware_fulltext_resume_generation_synthetic_urls,2026-05-31T20:55:33.980866+00:00,
