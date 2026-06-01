@@ -37,7 +37,7 @@ from openai import OpenAI
 
 
 DEFAULT_MODEL = "gpt-4o-mini"
-DEFAULT_PROMPT_VERSION = "v2_schema_aware_fulltext_resume_generation"
+DEFAULT_PROMPT_VERSION = "v3_schema_aware_fulltext_resume_generation_synthetic_urls"
 
 
 # ---------------------------------------------------------------------
@@ -115,24 +115,26 @@ You convert structured synthetic resume records into realistic plain-text softwa
 
 Rules:
 - Preserve only the facts provided in the structured input.
+- Use the candidate_identity full_name as the resume name.
+- Do not print candidate_reference in the resume.
 - Do not invent employers, titles, schools, degrees, dates, certifications, awards, metrics, locations, database names, project names, or technologies.
 - Only include URLs that are explicitly present in the structured input.
-- Do not mention age, age group, protected class, demographics, callback labels, interview labels, offer labels, or fairness labels.
 - If a GitHub URL or portfolio URL is present, include it exactly as provided.
-- Do not create generic numbered credentials such as "Certification 1", "Certification 2", or "Certification 3".
-- If only a certification count is provided, describe it as a count; do not invent certification names.
-- Do not mention projects unless project details are provided.
+- Do not mention age, age group, protected class, demographics, callback labels, interview labels, offer labels, or fairness labels.
 - Do not imply age with phrases like "young professional", "recent graduate", "seasoned veteran", "late-career", or "older candidate".
 - Do not add graduation years unless they are present in the structured input.
 - Do not add employment dates unless they are present in the structured input.
 - If a specific employer name, school name, certification name, project name, URL, or database name is missing, omit it entirely.
 - Never use placeholder text such as "[Company Name]", "[School Name]", "[GitHub URL]", "[Certification 1]", "not provided", "unspecified", or similar.
 - Never include bracketed placeholders of any kind.
+- Do not create generic numbered credentials such as "Certification 1", "Certification 2", or "Certification 3".
+- If only a certification count is provided, describe it as a count; do not invent certification names.
+- Do not mention projects unless project details are provided.
 - If highest_degree is "None", omit the Education section rather than writing "Highest Degree: None".
 - If the structured input contains counts or scores, translate them into resume-like language without exposing internal score names.
 - Keep the resume realistic, concise, professional, and ATS-readable.
 - Use plain text only.
-- Use sections when supported by the input: Summary, Skills, Experience, Education, Certifications, Projects.
+- Use sections when supported by the input: Summary, Skills, Experience, Education, Certifications, Projects, Links.
 - If a field is missing, omit it rather than filling it in.
 - Output only the resume text.
 """.strip()
@@ -282,21 +284,75 @@ def synthetic_github_url(candidate_id: Any, first_name: str, last_name: str) -> 
 
 def synthetic_portfolio_url(candidate_id: Any, first_name: str, last_name: str) -> str:
     """
-    Create a deterministic synthetic portfolio URL using example.com.
+    Create a deterministic fake-but-realistic portfolio URL.
 
-    example.com is reserved for documentation and avoids accidentally pointing
-    to a real personal domain.
+    This intentionally uses a synthetic-looking personal .dev domain so the resume
+    has a realistic portfolio signal without depending on real personal data.
+    These URLs are generated text artifacts for experimentation and are not meant
+    to be visited or treated as real websites.
     """
     seed = stable_int(candidate_id)
     suffix = 100 + (seed % 900)
 
-    subpath = (
-        f"{slugify_username_part(first_name)}-"
-        f"{slugify_username_part(last_name)}-"
+    domain = (
+        f"{slugify_username_part(first_name)}"
+        f"{slugify_username_part(last_name)}"
         f"{suffix}"
     )
 
-    return f"https://example.com/{subpath}"
+    return f"https://{domain}.dev"
+
+
+PLACEHOLDER_PATTERNS = [
+    re.compile(r"\[[^\]]+\]"),
+    re.compile(r"\bunspecified\b", re.IGNORECASE),
+    re.compile(r"\bnot provided\b", re.IGNORECASE),
+    re.compile(r"\bdetails not provided\b", re.IGNORECASE),
+    re.compile(r"\bCompany Name\b", re.IGNORECASE),
+    re.compile(r"\bSchool Name\b", re.IGNORECASE),
+    re.compile(r"\bGitHub URL present\b", re.IGNORECASE),
+    re.compile(r"\bPortfolio URL present\b", re.IGNORECASE),
+    re.compile(r"\bCertification [0-9]+\b", re.IGNORECASE),
+    re.compile(r"\bProject details\b", re.IGNORECASE),
+    re.compile(r"\bHighest Degree:\s*None\b", re.IGNORECASE),
+]
+
+
+def clean_generated_resume_text(text: str) -> str:
+    """
+    Remove obvious placeholder artifacts that occasionally survive prompting.
+
+    This is intentionally conservative: it removes bracketed placeholder text and
+    drops lines containing known placeholder phrases, while preserving normal
+    resume content such as "Certifications" or "3 certifications".
+    """
+    cleaned_lines: list[str] = []
+
+    for line in text.splitlines():
+        stripped = line.strip()
+
+        if not stripped:
+            cleaned_lines.append(line)
+            continue
+
+        if any(pattern.search(stripped) for pattern in PLACEHOLDER_PATTERNS):
+            continue
+
+        cleaned_lines.append(line)
+
+    cleaned = "\n".join(cleaned_lines)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).strip()
+    return cleaned
+
+
+def find_placeholder_artifacts(text: str) -> list[str]:
+    """
+    Return placeholder-like artifacts still present after cleanup.
+    """
+    artifacts: list[str] = []
+    for pattern in PLACEHOLDER_PATTERNS:
+        artifacts.extend(match.group(0) for match in pattern.finditer(text))
+    return artifacts
 
 def compact_record_for_prompt(
     row: pd.Series,
@@ -508,6 +564,8 @@ Structured record:
 
 Additional constraints:
 - Preserve the factual content of the structured record.
+- Use candidate_identity.full_name as the resume name.
+- Do not include candidate_reference in the resume.
 - Do not add new facts.
 - Do not mention the generation mode.
 - Do not mention age, age group, callback, interview, offer, target label, protected fields, or fairness analysis.
@@ -662,13 +720,18 @@ def generate_fulltext_resumes(
                 mode=mode,
                 model=model,
             )
+            resume_text = clean_generated_resume_text(resume_text)
+            artifacts = find_placeholder_artifacts(resume_text)
 
             output_df.at[idx, "generation_mode"] = mode
             output_df.at[idx, "resume_text"] = resume_text
             output_df.at[idx, "llm_model"] = model
             output_df.at[idx, "prompt_version"] = DEFAULT_PROMPT_VERSION
             output_df.at[idx, "generated_at"] = now_utc_iso()
-            output_df.at[idx, "generation_error"] = None
+            output_df.at[idx, "generation_error"] = (
+                f"placeholder_artifacts_after_cleanup={artifacts}"
+                if artifacts else None
+            )
 
         except Exception as exc:
             output_df.at[idx, "generation_mode"] = mode
