@@ -107,6 +107,11 @@ The experiments demonstrate how modern screening systems can reproduce similar p
 
 ---
 
+# Full Text Resume Analysis
+To extend the project beyond structured synthetic features, I added an NLP-based resume generation and screening pipeline. Structured synthetic resumes were converted into realistic full-text resumes using an LLM under strict factual-preservation constraints. These full-text resumes were then evaluated using pretrained language models and/or LLM-based screening prompts. This allows comparison between traditional structured-feature modeling and modern NLP-based resume evaluation, while retaining known age-group labels for fairness analysis.
+
+---
+
 ## Conclusion
 
 Machine learning-based resume screening systems can reproduce—and potentially amplify—age-related disparities already present in real-world labor market outcomes.
@@ -133,3 +138,8 @@ To reproduce the analysis:
 
 Then run:
 notebooks/00_cps_data_prep.ipynb
+
+### Kaggle Resume Dataset
+
+To validate the model performance against actual resumes, the Resume dataset from Kaggle was used.
+https://www.kaggle.com/datasets/haidermaseeh/resume-dataset
