@@ -1,3 +1,6 @@
-model_variant,accuracy,macro_f1,weighted_f1
-with_grad_year,0.9355,0.9315340470021651,0.9355635625924345
-without_grad_year,0.7295,0.7254318271128779,0.7292081108227878
+model,variant,accuracy,macro_f1,lift_over_majority
+baseline,majority_class,0.297,,1.0
+logreg,with_grad_year,0.924,0.9186482321817081,3.1111111111111116
+logreg,without_grad_year,0.8845,0.8807172052177368,2.978114478114478
+hgb,with_grad_year,0.9455,0.9439470973272652,3.183501683501684
+hgb,without_grad_year,0.902,0.8985994802218282,3.037037037037037

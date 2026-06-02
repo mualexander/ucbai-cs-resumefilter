@@ -17,11 +17,23 @@ Design:
 - Every row records model, temperature, seed, style, and prompt version, and is audited
   for fact preservation and leakage.
 
+Concurrency (this revision):
+- Requests are issued concurrently via asyncio + AsyncOpenAI, bounded by a semaphore.
+- Per-call exponential backoff with jitter on 429/5xx/timeout/connection errors,
+  honoring a `Retry-After` header when present.
+- Every per-row input (style, seed, name, URLs) is a pure function of candidate_id, so
+  concurrency NEVER changes which prompt/seed lands on which row -- output is identical
+  to the serial version, only faster. The age-language retry, checkpointing, and
+  resume-on-restart behavior are preserved exactly.
+- The binding rate limit for long completions is usually tokens-per-minute (TPM), not
+  requests-per-minute. Size --max-concurrency off your org/project TPM (platform.openai
+  .com -> Settings -> Limits); multiple processes share one pool and do not help.
+
 Example:
   python src/llm_resume_generation.py \
-    --input data/baseline/synthetic_resumes_full.parquet \
-    --output data/experiments/synthetic_resumes_fulltext_without_direct_age_proxies.csv \
-    --mode without_direct_age_proxies --limit 25
+    --input data/experiments/resume_text_input_age_balanced_10k.parquet \
+    --output data/experiments/synthetic_resumes_fulltext_without_direct_age_proxies.parquet \
+    --mode without_direct_age_proxies --max-concurrency 32
 
 Environment:
   export OPENAI_API_KEY="..."
@@ -30,17 +42,27 @@ Environment:
 from __future__ import annotations
 
 import argparse
+import asyncio
 import hashlib
 import json
 import os
+import random
 import re
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from openai import OpenAI
+from openai import AsyncOpenAI
+import openai as _openai
+
+# Transient errors we retry with backoff. Deliberately excludes the broad APIError
+# base (so 4xx like BadRequest fail fast and are recorded, not retried 6x).
+_RETRYABLE_ERRORS = tuple(
+    getattr(_openai, name)
+    for name in ("RateLimitError", "APITimeoutError", "APIConnectionError", "InternalServerError")
+    if hasattr(_openai, name)
+) or (Exception,)
 
 
 DEFAULT_MODEL = "gpt-4o-mini"
@@ -190,6 +212,22 @@ def write_dataframe(df: pd.DataFrame, path: Path) -> None:
     if s in {".parquet", ".pq"}:
         df.to_parquet(path, index=False); return
     raise ValueError(f"Unsupported output format: {path.suffix}")
+
+
+def write_dataframe_atomic(df: pd.DataFrame, path: Path) -> None:
+    """Write to a temp sibling then os.replace, so an interrupted checkpoint never
+    leaves a half-written output file. Dispatches on the FINAL path's extension
+    (the temp file's `.tmp` suffix must not drive format selection)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    s = path.suffix.lower()
+    if s == ".csv":
+        df.to_csv(tmp, index=False)
+    elif s in {".parquet", ".pq"}:
+        df.to_parquet(tmp, index=False)
+    else:
+        raise ValueError(f"Unsupported output format: {path.suffix}")
+    os.replace(tmp, path)
 
 
 def boolish(value: Any) -> bool | None:
@@ -457,34 +495,173 @@ def audit_faithfulness(text: str, record: dict[str, Any], mode: str, target_word
 
 
 # ---------------------------------------------------------------------
-# Generation
+# Async generation (one API call, with backoff; semaphore-bounded)
 # ---------------------------------------------------------------------
 
-def generate_resume_text(client: OpenAI, record, mode, style, target_words, model, temperature,
-                         seed: int, max_retries: int = 3, retry_sleep_seconds: float = 3.0) -> str:
-    user_prompt = build_user_prompt(record, mode, style, target_words)
+def _retry_after_seconds(exc: Exception) -> float | None:
+    """Best-effort read of a Retry-After header off an OpenAI error's response."""
+    resp = getattr(exc, "response", None)
+    headers = getattr(resp, "headers", None)
+    if not headers:
+        return None
+    val = headers.get("retry-after") or headers.get("Retry-After")
+    if val is None:
+        return None
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return None
+
+
+async def acall_chat_completion(
+    client: AsyncOpenAI, sem: asyncio.Semaphore, *, model: str, temperature: float, seed: int,
+    messages: list[dict], max_retries: int, base_delay: float = 2.0,
+) -> str:
+    """Single chat completion with exponential backoff + jitter. The semaphore is
+    acquired per-attempt and RELEASED during backoff sleeps, so a waiting request
+    never burns a concurrency slot. Empty content is treated as retryable."""
     last_error: Exception | None = None
-    for attempt in range(1, max_retries + 1):
+    for attempt in range(max_retries + 1):
+        async with sem:
+            try:
+                resp = await client.chat.completions.create(
+                    model=model, temperature=temperature, seed=seed, messages=messages,
+                )
+                content = resp.choices[0].message.content
+                if content and content.strip():
+                    return content.strip()
+                last_error = ValueError("Model returned empty content.")
+            except _RETRYABLE_ERRORS as exc:
+                last_error = exc
+                retry_after = _retry_after_seconds(exc)
+            else:
+                retry_after = None  # empty content -> plain backoff
+        # slot released here before sleeping (retry_after is always bound by the
+        # try/except/else above)
+        if attempt < max_retries:
+            delay = retry_after if retry_after is not None else base_delay * (2 ** attempt)
+            delay += random.uniform(0.0, 0.5 * delay)  # jitter
+            await asyncio.sleep(delay)
+    raise RuntimeError(f"Failed after {max_retries + 1} attempts.") from last_error
+
+
+async def process_row(
+    idx: Any, row: pd.Series, *, client: AsyncOpenAI, sem: asyncio.Semaphore,
+    mode: str, model: str, temperature: float, base_seed: int, id_column: str, max_retries: int,
+) -> dict[str, Any]:
+    """Build the prompt deterministically from candidate_id, generate, audit, and
+    retry up to 3x ONLY on evaluative age language (attempt 0 keeps the deterministic
+    seed so clean rows are unchanged). Mirrors the serial loop exactly."""
+    candidate_id = row[id_column]
+    style = choose_style(candidate_id)
+    seed = (base_seed + stable_int(candidate_id)) % (2**31 - 1)
+    target_words = length_target_words(row)
+    record = compact_record_for_prompt(row, mode, id_column)
+    user_prompt = build_user_prompt(record, mode, style, target_words)
+    messages = [{"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt}]
+
+    text, issues, used_seed = None, ["age_language"], seed
+    for attempt in range(3):
+        used_seed = (seed + attempt * 104729) % (2**31 - 1)
+        raw = await acall_chat_completion(
+            client, sem, model=model, temperature=temperature, seed=used_seed,
+            messages=messages, max_retries=max_retries,
+        )
+        text = clean_generated_resume_text(raw)
+        issues = audit_faithfulness(text, record, mode, target_words)
+        if "age_language" not in issues:
+            break
+
+    return {
+        "idx": idx, "generation_mode": mode, "resume_text": text, "llm_model": model,
+        "temperature": temperature, "seed": used_seed, "style": style,
+        "prompt_version": DEFAULT_PROMPT_VERSION, "generated_at": now_utc_iso(),
+        "generation_error": None, "faithfulness_ok": (len(issues) == 0),
+        "faithfulness_issues": "; ".join(issues) if issues else None,
+    }
+
+
+# ---------------------------------------------------------------------
+# Orchestration
+# ---------------------------------------------------------------------
+
+OUT_COLS = ["generation_mode","resume_text","llm_model","temperature","seed","style",
+            "prompt_version","generated_at","generation_error","faithfulness_ok","faithfulness_issues"]
+
+
+def _prepare_output_df(input_df: pd.DataFrame, output_path: Path, mode: str,
+                       id_column: str, overwrite: bool) -> pd.DataFrame:
+    """Resume-on-restart: merge any prior results for this mode, then ensure out cols."""
+    if output_path.exists() and not overwrite:
+        prev = read_dataframe(output_path)
+        if {id_column, "generation_mode", "resume_text"}.issubset(prev.columns):
+            keep = [c for c in [id_column] + OUT_COLS if c in prev.columns]
+            prior = prev[prev["generation_mode"].astype(str) == mode][keep]
+            output_df = input_df.merge(prior, on=id_column, how="left")
+        else:
+            output_df = input_df.copy()
+    else:
+        output_df = input_df.copy()
+
+    for col in OUT_COLS:
+        if col not in output_df.columns:
+            output_df[col] = pd.Series([pd.NA] * len(output_df), dtype="object")
+    return output_df
+
+
+def _needs_generation(row: pd.Series, overwrite: bool) -> bool:
+    if overwrite:
+        return True
+    existing = row.get("resume_text")
+    return not (isinstance(existing, str) and existing.strip())
+
+
+async def _run_async(
+    output_df: pd.DataFrame, todo_idxs: list, output_path: Path, *, client: AsyncOpenAI,
+    mode: str, model: str, temperature: float, base_seed: int, id_column: str,
+    max_concurrency: int, max_retries: int, save_every: int,
+) -> None:
+    sem = asyncio.Semaphore(max_concurrency)
+    total = len(todo_idxs)
+    state = {"done": 0}  # single-threaded asyncio: mutation between awaits is atomic
+
+    async def worker(idx) -> None:
+        row = output_df.loc[idx]
+        candidate_id = row[id_column]
         try:
-            response = client.chat.completions.create(
-                model=model, temperature=temperature, seed=seed,
-                messages=[{"role": "system", "content": SYSTEM_PROMPT},
-                          {"role": "user", "content": user_prompt}],
+            res = await process_row(
+                idx, row, client=client, sem=sem, mode=mode, model=model,
+                temperature=temperature, base_seed=base_seed, id_column=id_column,
+                max_retries=max_retries,
             )
-            content = response.choices[0].message.content
-            if not content or not content.strip():
-                raise ValueError("Model returned empty content.")
-            return content.strip()
-        except Exception as exc:
-            last_error = exc
-            print(f"Attempt {attempt}/{max_retries} failed: {exc}")
-            if attempt < max_retries:
-                time.sleep(retry_sleep_seconds * attempt)
-    raise RuntimeError(f"Failed after {max_retries} attempts.") from last_error
+            for col in OUT_COLS:
+                output_df.at[idx, col] = res[col]
+            tag = "ok" if res["faithfulness_ok"] else f"issues=[{res['faithfulness_issues']}]"
+        except Exception as exc:  # record, never crash the whole run (matches serial)
+            output_df.at[idx, "generation_mode"] = mode
+            output_df.at[idx, "generation_error"] = str(exc)
+            tag = f"ERROR: {exc}"
+
+        state["done"] += 1
+        done = state["done"]
+        print(f"[{done}/{total}] {id_column}={candidate_id} | {tag}")
+        if done % save_every == 0:
+            # Blocking write with no await inside -> atomic w.r.t. the event loop.
+            write_dataframe_atomic(output_df, output_path)
+            print(f"  checkpoint -> {output_path} ({done}/{total})")
+
+    await asyncio.gather(*(worker(i) for i in todo_idxs))
 
 
-def generate_fulltext_resumes(input_path, output_path, mode, model, api_key, id_column,
-                              limit, sleep_seconds, save_every, overwrite, temperature, base_seed) -> pd.DataFrame:
+def generate_fulltext_resumes(
+    input_path: Path, output_path: Path, mode: str, model: str, api_key: str | None,
+    id_column: str, limit: int | None, save_every: int, overwrite: bool,
+    temperature: float, base_seed: int, max_concurrency: int = 24, max_retries: int = 6,
+    client: AsyncOpenAI | None = None,
+) -> pd.DataFrame:
+    """Concurrent generation. `client` is injectable for testing; otherwise an
+    AsyncOpenAI client is created (with SDK retries disabled — we own backoff)."""
     mode_excludes(mode)  # validate
     input_df = read_dataframe(input_path)
     if limit is not None:
@@ -493,69 +670,30 @@ def generate_fulltext_resumes(input_path, output_path, mode, model, api_key, id_
         print(f"Warning: id_column {id_column!r} not found. Creating from row index.")
         input_df[id_column] = [f"row_{i:06d}" for i in range(len(input_df))]
 
-    out_cols = ["generation_mode","resume_text","llm_model","temperature","seed","style",
-                "prompt_version","generated_at","generation_error","faithfulness_ok","faithfulness_issues"]
+    output_df = _prepare_output_df(input_df, output_path, mode, id_column, overwrite)
+    todo_idxs = [idx for idx, row in output_df.iterrows() if _needs_generation(row, overwrite)]
+    print(f"Rows: {len(output_df)} total | {len(todo_idxs)} to generate "
+          f"| {len(output_df) - len(todo_idxs)} already done | concurrency={max_concurrency}")
 
-    if output_path.exists() and not overwrite:
-        prev = read_dataframe(output_path)
-        if {id_column, "generation_mode", "resume_text"}.issubset(prev.columns):
-            keep = [c for c in [id_column] + out_cols if c in prev.columns]
-            prior = prev[prev["generation_mode"].astype(str) == mode][keep]
-            output_df = input_df.merge(prior, on=id_column, how="left")
-        else:
-            output_df = input_df.copy()
-    else:
-        output_df = input_df.copy()
+    if todo_idxs:
+        owns_client = client is None
+        if owns_client:
+            client = AsyncOpenAI(api_key=api_key or os.environ.get("OPENAI_API_KEY"), max_retries=0)
 
-    for col in out_cols:
-        if col not in output_df.columns:
-            output_df[col] = pd.Series([pd.NA] * len(output_df), dtype="object")
+        async def _main():
+            try:
+                await _run_async(
+                    output_df, todo_idxs, output_path, client=client, mode=mode, model=model,
+                    temperature=temperature, base_seed=base_seed, id_column=id_column,
+                    max_concurrency=max_concurrency, max_retries=max_retries, save_every=save_every,
+                )
+            finally:
+                if owns_client:
+                    await client.close()
 
-    client = OpenAI(api_key=api_key or os.environ.get("OPENAI_API_KEY"))
-    total = len(output_df)
+        asyncio.run(_main())
 
-    for idx, row in output_df.iterrows():
-        existing = row.get("resume_text")
-        if not overwrite and isinstance(existing, str) and existing.strip():
-            continue
-        candidate_id = row[id_column]
-        style = choose_style(candidate_id)
-        seed = (base_seed + stable_int(candidate_id)) % (2**31 - 1)
-        target_words = length_target_words(row)
-        print(f"Generating {idx + 1}/{total} | {id_column}={candidate_id} | mode={mode}")
-        try:
-            record = compact_record_for_prompt(row, mode, id_column)
-            # Generate; if evaluative age language slips in, retry with a perturbed
-            # seed (attempt 0 keeps the deterministic seed, so clean rows are unchanged).
-            text, issues, used_seed = None, ["age_language"], seed
-            for attempt in range(3):
-                used_seed = (seed + attempt * 104729) % (2**31 - 1)
-                text = clean_generated_resume_text(
-                    generate_resume_text(client, record, mode, style, target_words, model, temperature, used_seed))
-                issues = audit_faithfulness(text, record, mode, target_words)
-                if "age_language" not in issues:
-                    break
-            output_df.at[idx, "generation_mode"] = mode
-            output_df.at[idx, "resume_text"] = text
-            output_df.at[idx, "llm_model"] = model
-            output_df.at[idx, "temperature"] = temperature
-            output_df.at[idx, "seed"] = used_seed
-            output_df.at[idx, "style"] = style
-            output_df.at[idx, "prompt_version"] = DEFAULT_PROMPT_VERSION
-            output_df.at[idx, "generated_at"] = now_utc_iso()
-            output_df.at[idx, "generation_error"] = None
-            output_df.at[idx, "faithfulness_ok"] = (len(issues) == 0)
-            output_df.at[idx, "faithfulness_issues"] = "; ".join(issues) if issues else None
-        except Exception as exc:
-            output_df.at[idx, "generation_mode"] = mode
-            output_df.at[idx, "generation_error"] = str(exc)
-            print(f"Failed {id_column}={candidate_id}: {exc}")
-        if (idx + 1) % save_every == 0:
-            write_dataframe(output_df, output_path)
-            print(f"Saved checkpoint to {output_path}")
-        time.sleep(sleep_seconds)
-
-    write_dataframe(output_df, output_path)
+    write_dataframe_atomic(output_df, output_path)
     ok = output_df["faithfulness_ok"]
     print(f"Done. Wrote {output_path}")
     try:
@@ -567,7 +705,7 @@ def generate_fulltext_resumes(input_path, output_path, mode, model, api_key, id_
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Generate full-text resumes from structured synthetic records.")
+    p = argparse.ArgumentParser(description="Generate full-text resumes from structured synthetic records (concurrent).")
     p.add_argument("--input", required=True)
     p.add_argument("--output", required=True)
     p.add_argument("--mode", default="without_direct_age_proxies", choices=sorted(MODE_EXCLUDE_COLUMNS.keys()))
@@ -577,8 +715,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--api-key", default=None, help="Prefer OPENAI_API_KEY env var.")
     p.add_argument("--id-column", default="candidate_id")
     p.add_argument("--limit", type=int, default=None)
-    p.add_argument("--sleep-seconds", type=float, default=0.2)
-    p.add_argument("--save-every", type=int, default=10)
+    p.add_argument("--max-concurrency", type=int, default=24,
+                   help="Max in-flight requests. Size off your org/project TPM, not RPM.")
+    p.add_argument("--max-retries", type=int, default=6, help="Per-call backoff retries on 429/5xx/timeout.")
+    p.add_argument("--save-every", type=int, default=50, help="Checkpoint after this many completed rows.")
     p.add_argument("--overwrite", action="store_true")
     return p.parse_args()
 
@@ -587,8 +727,9 @@ def main() -> None:
     a = parse_args()
     generate_fulltext_resumes(
         input_path=Path(a.input), output_path=Path(a.output), mode=a.mode, model=a.model,
-        api_key=a.api_key, id_column=a.id_column, limit=a.limit, sleep_seconds=a.sleep_seconds,
-        save_every=a.save_every, overwrite=a.overwrite, temperature=a.temperature, base_seed=a.base_seed,
+        api_key=a.api_key, id_column=a.id_column, limit=a.limit, save_every=a.save_every,
+        overwrite=a.overwrite, temperature=a.temperature, base_seed=a.base_seed,
+        max_concurrency=a.max_concurrency, max_retries=a.max_retries,
     )
 
 
