@@ -293,9 +293,14 @@ def generate_features(config: GenerationConfig) -> pd.DataFrame:
         DEFAULT_CATEGORY_LEVELS["gpa_bucket"], size=n, p=[0.55, 0.10, 0.15, 0.12, 0.08]
     )
 
-    years_exp = np.clip((true_age - 26) * 0.75 + rng.normal(0, 3.0, size=n), 0, 30).astype(np.float32)
+    # Career starts ~at graduation (age ~22, with spread for early starters) and accrues
+    # ~1 year per calendar year, minus modest cumulative gaps. Cap at age-17, not a flat 30,
+    # so older candidates carry realistic 25-40 year careers.
+    career_start_age = np.clip(grad_age + rng.integers(-1, 2, size=n), 18, 26)
+    career_gap_years = np.clip(rng.gamma(shape=1.5, scale=0.8, size=n), 0.0, 6.0)
+    years_exp = np.clip(true_age - career_start_age - career_gap_years, 0.0, true_age - 17.0).astype(np.float32)
     df["years_experience_total"] = years_exp
-    df["years_experience_relevant"] = (years_exp * rng.uniform(0.70, 1.0, size=n)).astype(np.float32)
+    df["years_experience_relevant"] = (years_exp * rng.uniform(0.75, 1.0, size=n)).astype(np.float32)
 
     df["num_employers"] = np.clip(
         (years_exp / rng.uniform(2.5, 4.5, size=n)) + rng.normal(0, 1.0, size=n), 0, 25
@@ -322,9 +327,9 @@ def generate_features(config: GenerationConfig) -> pd.DataFrame:
             elif yrs < 18:
                 out[i] = rng.choice(["Staff Engineer", "Engineering Manager", "Principal Engineer"], p=[0.5, 0.35, 0.15])
             elif yrs < 25:
-                out[i] = rng.choice(["Engineering Manager", "Senior Engineering Manager", "Principal Engineer"], p=[0.45, 0.30, 0.25])
+                out[i] = rng.choice(["Principal Engineer", "Staff Engineer", "Engineering Manager", "Senior Engineering Manager"], p=[0.30, 0.15, 0.30, 0.25])
             else:
-                out[i] = rng.choice(["Engineering Manager", "Senior Engineering Manager", "Director"], p=[0.35, 0.40, 0.25])
+                out[i] = rng.choice(["Principal Engineer", "Staff Engineer", "Engineering Manager", "Senior Engineering Manager", "Director"], p=[0.26, 0.12, 0.27, 0.22, 0.13])
         return out
     df["most_recent_title"] = assign_title_vec(years_exp, rng)
 
@@ -400,8 +405,8 @@ def generate_features(config: GenerationConfig) -> pd.DataFrame:
 # -----------------------------
 
 # Tunable scoring constants (exposed so they are documented, not buried).
-EXP_TARGET, EXP_TOL = 6.0, 5.0          # peak experience-fit at ~6 relevant years
-MGMT_TARGET, MGMT_TOL = 2.0, 2.5        # peak management-fit at ~2 years
+EXP_TARGET, EXP_SIGMA = 12.0, 18.0      # peak mid-career fit at ~12 relevant years (~age 34)
+MGMT_TARGET, MGMT_SIGMA = 3.0, 4.0      # peak management-fit at ~3 years
 W_EXP_FIT = 0.10
 W_MGMT_FIT = 0.05
 W_RECENCY = 0.08
@@ -441,8 +446,8 @@ def compute_label_components(df: pd.DataFrame, config: GenerationConfig, rng: np
     base_merit = (0.35 * keyword + 0.20 * fmt + 0.15 * (quant / 25.0) + 0.15).astype(np.float32)
 
     # 2) structural fit-to-mid-career terms
-    exp_fit = np.clip(1.0 - np.abs(yr_rel - EXP_TARGET) / EXP_TOL, 0.0, 1.0).astype(np.float32)
-    mgmt_fit = np.clip(1.0 - np.abs(mgmt - MGMT_TARGET) / MGMT_TOL, 0.0, 1.0).astype(np.float32)
+    exp_fit = np.exp(-((yr_rel - EXP_TARGET) ** 2) / (2.0 * EXP_SIGMA ** 2)).astype(np.float32)
+    mgmt_fit = np.exp(-((mgmt - MGMT_TARGET) ** 2) / (2.0 * MGMT_SIGMA ** 2)).astype(np.float32)
     recency_reward = np.clip(modern / 10.0, 0.0, 1.0).astype(np.float32)
     senior_title_penalty = np.array(
         [SENIOR_TITLE_PENALTY.get(t, 0.0) for t in title], dtype=np.float32

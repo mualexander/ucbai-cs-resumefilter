@@ -45,7 +45,7 @@ from openai import OpenAI
 
 DEFAULT_MODEL = "gpt-4o-mini"
 DEFAULT_TEMPERATURE = 0.4
-DEFAULT_PROMPT_VERSION = "v4_varied_faithful_lengthtargeted"
+DEFAULT_PROMPT_VERSION = "v5_varied_faithful_noageadj"
 
 
 # ---------------------------------------------------------------------
@@ -151,6 +151,7 @@ NO AGE SIGNAL:
 - Never imply age with words like "young", "recent graduate", "seasoned", "veteran", "late-career",
   "decades of", "long career", or similar.
 - Do not output internal field or score names.
+- Do NOT describe the candidate with evaluative age/experience adjectives such as "seasoned", "veteran", "young", "youthful", "mature", "recent graduate", or "fresh graduate". State experience only as the provided facts (e.g., "X years of experience").
 
 ELABORATION (for realism, within the facts):
 - You MAY describe responsibilities and scope generically in a way that is consistent with the given
@@ -382,6 +383,7 @@ Constraints:
 - Preserve the factual content; do not add new specific facts (no invented employers, dates, numbers, or project names).
 - Use candidate_identity.full_name as the name; never print candidate_reference.
 - Do not mention age, age group, callbacks, labels, fairness, or internal field/score names.
+- Do not use evaluative age/experience adjectives (e.g. "seasoned", "veteran", "young", "mature", "recent graduate").
 - Do not use bracketed placeholders or "unspecified"/"not provided".
 - If highest_degree is "None", omit Education.
 - Include GitHub/portfolio URLs only if present, copied exactly.
@@ -397,8 +399,10 @@ Constraints:
 # ---------------------------------------------------------------------
 
 AGE_LANGUAGE = re.compile(
-    r"\b(young|recent graduate|seasoned|veteran|late[- ]career|early[- ]career|"
-    r"decades of|long career|older|elderly|junior in age|age \d+)\b", re.IGNORECASE)
+    r"\b(young|youthful|recent graduate|fresh graduate|seasoned|veteran|"
+    r"mature professional|mature engineer|elderly|"
+    r"older (?:worker|professional|candidate|individual|engineer)|"
+    r"junior in age|age \d{2})\b", re.IGNORECASE)
 YEAR_PATTERN = re.compile(r"\b(19[6-9]\d|20[0-2]\d)\b")
 
 
@@ -521,14 +525,21 @@ def generate_fulltext_resumes(input_path, output_path, mode, model, api_key, id_
         print(f"Generating {idx + 1}/{total} | {id_column}={candidate_id} | mode={mode}")
         try:
             record = compact_record_for_prompt(row, mode, id_column)
-            text = generate_resume_text(client, record, mode, style, target_words, model, temperature, seed)
-            text = clean_generated_resume_text(text)
-            issues = audit_faithfulness(text, record, mode, target_words)
+            # Generate; if evaluative age language slips in, retry with a perturbed
+            # seed (attempt 0 keeps the deterministic seed, so clean rows are unchanged).
+            text, issues, used_seed = None, ["age_language"], seed
+            for attempt in range(3):
+                used_seed = (seed + attempt * 104729) % (2**31 - 1)
+                text = clean_generated_resume_text(
+                    generate_resume_text(client, record, mode, style, target_words, model, temperature, used_seed))
+                issues = audit_faithfulness(text, record, mode, target_words)
+                if "age_language" not in issues:
+                    break
             output_df.at[idx, "generation_mode"] = mode
             output_df.at[idx, "resume_text"] = text
             output_df.at[idx, "llm_model"] = model
             output_df.at[idx, "temperature"] = temperature
-            output_df.at[idx, "seed"] = seed
+            output_df.at[idx, "seed"] = used_seed
             output_df.at[idx, "style"] = style
             output_df.at[idx, "prompt_version"] = DEFAULT_PROMPT_VERSION
             output_df.at[idx, "generated_at"] = now_utc_iso()
