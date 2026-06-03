@@ -67,7 +67,7 @@ _RETRYABLE_ERRORS = tuple(
 
 DEFAULT_MODEL = "gpt-4o-mini"
 DEFAULT_TEMPERATURE = 0.4
-DEFAULT_PROMPT_VERSION = "v5_varied_faithful_noageadj"
+DEFAULT_PROMPT_VERSION = "v6_varied_faithful_plaintext_nolabels"
 
 
 # ---------------------------------------------------------------------
@@ -173,6 +173,7 @@ NO AGE SIGNAL:
 - Never imply age with words like "young", "recent graduate", "seasoned", "veteran", "late-career",
   "decades of", "long career", or similar.
 - Do not output internal field or score names.
+- Never print structured field names, labels, or bucket codes verbatim (e.g., "Company Size: 1000+", "University Tier: 5", "School Tier", "GPA Bucket"). Express such facts in natural language (e.g., "at a large organization") or omit them; never print a school tier at all.
 - Do NOT describe the candidate with evaluative age/experience adjectives such as "seasoned", "veteran", "young", "youthful", "mature", "recent graduate", or "fresh graduate". State experience only as the provided facts (e.g., "X years of experience").
 
 ELABORATION (for realism, within the facts):
@@ -308,14 +309,18 @@ PLACEHOLDER_PATTERNS = [
 def clean_generated_resume_text(text: str) -> str:
     out = []
     for line in text.splitlines():
-        if line.strip() and any(p.search(line.strip()) for p in PLACEHOLDER_PATTERNS):
+        s = line.strip()
+        if s and any(p.search(s) for p in PLACEHOLDER_PATTERNS):
+            continue
+        if re.fullmatch(r"[-*_=]{3,}", s):   # markdown horizontal rules / divider lines
             continue
         out.append(line)
     cleaned = "\n".join(out)
     # Strip markdown emphasis/headers so output is true plain text (ATS-style),
     # consistent with the external plain-text corpus used in notebook 09.
-    cleaned = re.sub(r"\*\*([^*]+)\*\*", r"\1", cleaned)   # **bold**
-    cleaned = re.sub(r"__([^_]+)__", r"\1", cleaned)        # __bold__
+    cleaned = re.sub(r"\*\*([^*]+)\*\*", r"\1", cleaned)            # **bold**
+    cleaned = re.sub(r"__([^_]+)__", r"\1", cleaned)                # __bold__
+    cleaned = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"\1", cleaned) # *italic*
     cleaned = re.sub(r"^\s{0,3}#{1,6}\s*", "", cleaned, flags=re.MULTILINE)  # # headers
     return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
 
@@ -368,7 +373,7 @@ def compact_record_for_prompt(row: pd.Series, mode: str, id_column: str) -> dict
     target = {c: get(c) for c in ["application_year","target_role_family","target_role_level","region"] if get(c) is not None}
     if target: rec["target_context"] = target
 
-    education = {c: get(c) for c in ["highest_degree","graduation_year","school_tier","gpa_bucket"] if get(c) is not None}
+    education = {c: get(c) for c in ["highest_degree","graduation_year","gpa_bucket"] if get(c) is not None}
     if education: rec["education"] = education
 
     experience = {c: get(c) for c in ["years_experience_total","years_experience_relevant","num_employers",
@@ -421,6 +426,7 @@ Constraints:
 - Preserve the factual content; do not add new specific facts (no invented employers, dates, numbers, or project names).
 - Use candidate_identity.full_name as the name; never print candidate_reference.
 - Do not mention age, age group, callbacks, labels, fairness, or internal field/score names.
+- Do not print structured field labels or bucket codes (e.g. "Company Size: 1000+", "University Tier: 5"); use natural language or omit.
 - Do not use evaluative age/experience adjectives (e.g. "seasoned", "veteran", "young", "mature", "recent graduate").
 - Do not use bracketed placeholders or "unspecified"/"not provided".
 - If highest_degree is "None", omit Education.
@@ -440,6 +446,7 @@ AGE_LANGUAGE = re.compile(
     r"\b(young|youthful|recent graduate|fresh graduate|seasoned|veteran|"
     r"mature professional|mature engineer|elderly|"
     r"older (?:worker|professional|candidate|individual|engineer)|"
+    r"decades of (?:experience|industry)|long career|late[- ]career|"   # <- added
     r"junior in age|age \d{2})\b", re.IGNORECASE)
 YEAR_PATTERN = re.compile(r"\b(19[6-9]\d|20[0-2]\d)\b")
 
