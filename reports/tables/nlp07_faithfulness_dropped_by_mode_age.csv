@@ -1,0 +1,16 @@
+generation_mode,age_group,dropped_rows,dropped_rate
+minimal_proxy,<30,5,0.002
+minimal_proxy,30-39,0,0.0
+minimal_proxy,40-49,2,0.0008
+minimal_proxy,50-59,11,0.0044
+minimal_proxy,60+,6,0.0024
+with_proxies,<30,3,0.0012
+with_proxies,30-39,1,0.0004
+with_proxies,40-49,1,0.0004
+with_proxies,50-59,3,0.0012
+with_proxies,60+,3,0.0012
+without_direct_age_proxies,<30,0,0.0
+without_direct_age_proxies,30-39,0,0.0
+without_direct_age_proxies,40-49,2,0.0008
+without_direct_age_proxies,50-59,5,0.002
+without_direct_age_proxies,60+,5,0.002
