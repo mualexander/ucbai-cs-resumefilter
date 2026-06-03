@@ -8,11 +8,35 @@ AGE_BINS = [18, 30, 40, 50, np.inf]
 AGE_LABELS = ["<30", "30-39", "40-49", "50+"]
 
 CAREER_STAGE_BINS = [22, 33, 43, 53, np.inf]
-CAREER_STAGE_LABELS = ["22-32", "33-42", "43-52", "52+"]
+CAREER_STAGE_LABELS = ["22-32", "33-42", "43-52", "53+"]
 
 UNEMPLOYED_CODES = [20, 21, 22]
 EMPLOYED_CODES = [10, 12]
 
+ANALYSIS_COLUMNS = ["YEAR", "MONTH", "AGE", "EMPSTAT", "DURUNEMP", "WTFINL", "OCC2010"]
+DURUNEMP_NIU = 999
+
+LABOR_FORCE_CODES = EMPLOYED_CODES + UNEMPLOYED_CODES   # [10, 12, 20, 21, 22]
+
+def standardize_cps_extract(raw_path, columns=ANALYSIS_COLUMNS, min_year=None):
+    """Standardize a raw IPUMS CPS CSV extract into the analysis frame
+    (data/interim/cps_clean.parquet).
+
+    - Basic-monthly only: ASEC/supplement rows have no basic-monthly weight
+      (WTFINL is NIU), so WTFINL>0 drops them and avoids double-counting March.
+    - Recodes DURUNEMP's NIU sentinel (999) to NaN, so a not-in-universe value
+      can never inflate a duration mean (and so the downstream dropna works).
+    - Keeps only the columns the analysis uses.
+
+    Age/weight analysis filters and the age/career groupings stay in
+    clean_cps_base(); this function just defines the basic-monthly universe.
+    """
+    df = pd.read_csv(raw_path, usecols=lambda c: c in set(columns))
+    df = df[df["WTFINL"].notna() & (df["WTFINL"] > 0)]            # basic monthly only
+    df["DURUNEMP"] = df["DURUNEMP"].replace(DURUNEMP_NIU, np.nan)  # NIU -> NaN
+    if min_year is not None:
+        df = df[df["YEAR"] >= min_year]
+    return df.reset_index(drop=True)
 
 def add_age_group(df: pd.DataFrame) -> pd.DataFrame:
     """Add broad age-group buckets."""
@@ -118,32 +142,24 @@ def weighted_rate(
     weights = group.loc[valid, weight_col]
     return float(np.average(values, weights=weights))
 
-
 def unemployment_summary_by_age(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Return weighted unemployment rate and weighted mean unemployment duration by age group.
-
-    Expects a base-cleaned CPS dataframe.
-    """
     df = df.copy()
     df["is_unemployed"] = df["EMPSTAT"].isin(UNEMPLOYED_CODES)
 
+    lf = df[df["EMPSTAT"].isin(LABOR_FORCE_CODES)]          # denominator = labor force
     unemp_rate = (
-        df.groupby("age_group", observed=True)
+        lf.groupby("age_group", observed=True)
         .apply(lambda g: weighted_rate(g, "is_unemployed"))
         .rename("unemployment_rate")
     )
 
     df_unemp = df[df["is_unemployed"]].copy()
-
     unemp_duration = (
         df_unemp.groupby("age_group", observed=True)
         .apply(lambda g: weighted_mean(g, "DURUNEMP"))
         .rename("mean_unemployment_duration_weeks")
     )
-
     return pd.concat([unemp_rate, unemp_duration], axis=1).reset_index()
-
 
 def unemployment_summary_by_career_stage(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -154,8 +170,9 @@ def unemployment_summary_by_career_stage(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["is_unemployed"] = df["EMPSTAT"].isin(UNEMPLOYED_CODES)
 
+    lf = df[df["EMPSTAT"].isin(LABOR_FORCE_CODES)]
     unemp_rate = (
-        df.groupby("career_stage", observed=True)
+        lf.groupby("career_stage", observed=True)
         .apply(lambda g: weighted_rate(g, "is_unemployed"))
         .rename("unemployment_rate")
     )
@@ -170,7 +187,6 @@ def unemployment_summary_by_career_stage(df: pd.DataFrame) -> pd.DataFrame:
 
     return pd.concat([unemp_rate, unemp_duration], axis=1).reset_index()
 
-
 def unemployment_duration_by_group_over_time(
     df: pd.DataFrame,
     group_col: str,
@@ -181,21 +197,16 @@ def unemployment_duration_by_group_over_time(
     """
     Return weighted unemployment duration by year and a grouping column.
 
-    Example group_col values:
-    - "age_group"
-    - "career_stage"
+    Year filtering (e.g. complete calendar years only) is the caller's
+    responsibility — pass a pre-filtered df. Example group_col values:
+    "age_group", "career_stage".
     """
     df = df.copy()
     df["is_unemployed"] = df["EMPSTAT"].isin(UNEMPLOYED_CODES)
-
-    df_unemp = df[df["is_unemployed"]].copy()
-    df_unemp = df_unemp.dropna(subset=[duration_col])
-
-    result = (
+    df_unemp = df[df["is_unemployed"]].dropna(subset=[duration_col]).copy()
+    return (
         df_unemp.groupby([year_col, group_col], observed=True)
         .apply(lambda g: weighted_mean(g, duration_col, weight_col))
         .rename("mean_duration")
         .reset_index()
     )
-
-    return result

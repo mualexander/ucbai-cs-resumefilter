@@ -6,10 +6,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]   # src/paths.py -> repo root
 DATA_DIR = PROJECT_ROOT / "data"
 MODELS_DIR = PROJECT_ROOT / "models"
 BASELINE_DIR = DATA_DIR / "baseline"
-REPORTS_DIR = ROOT / "reports"
+REPORTS_DIR = PROJECT_ROOT / "reports"
 EXPERIMENTS_DIR = DATA_DIR / "experiments"
 EMBEDDINGS_DIR = EXPERIMENTS_DIR / "embeddings"
 INTERIM_DIR = DATA_DIR / "interim"
+EXTERNAL_DIR = DATA_DIR / "external"
 TABLES_DIR = PROJECT_ROOT / "reports" / "tables"
 FIGURES_DIR = PROJECT_ROOT / "reports" / "figures"
 
@@ -21,6 +22,7 @@ for d in (
     EXPERIMENTS_DIR,
     EMBEDDINGS_DIR,
     INTERIM_DIR,
+    EXTERNAL_DIR,
     TABLES_DIR,
     FIGURES_DIR,
 ):
