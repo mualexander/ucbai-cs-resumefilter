@@ -45,6 +45,7 @@ from __future__ import annotations
 from dataclasses import dataclass, asdict
 from pathlib import Path
 import json
+import hashlib
 import numpy as np
 import pandas as pd
 
@@ -218,6 +219,33 @@ def coerce_dtypes(df: pd.DataFrame, dtypes: dict | None = None) -> pd.DataFrame:
             df[col] = df[col].astype(dtype)
     return df
 
+def dataset_fingerprint(df: pd.DataFrame) -> str:
+    """Order-independent content hash of a resume dataset.
+
+    Always compute this on a frame read back from parquet (not an in-memory one),
+    so the hash reflects the on-disk representation downstream consumers read.
+    """
+    key = df.sort_values("candidate_id").reset_index(drop=True)
+    h = pd.util.hash_pandas_object(key, index=False).to_numpy()
+    return hashlib.sha256(h.tobytes()).hexdigest()[:16]
+
+
+def ensure_fingerprint(metadata_path, parquet_path) -> str | None:
+    """Return the stored dataset fingerprint.
+
+    If metadata exists without a fingerprint but the parquet is present, backfill
+    it from the existing data — i.e. 'bless' already-generated data (the dataset
+    your full-text resumes were built from) as the reference, without regenerating.
+    Returns None if no metadata exists yet.
+    """
+    metadata_path, parquet_path = Path(metadata_path), Path(parquet_path)
+    if not metadata_path.exists():
+        return None
+    meta = json.loads(metadata_path.read_text(encoding="utf-8"))
+    if meta.get("fingerprint") is None and parquet_path.exists():
+        meta["fingerprint"] = dataset_fingerprint(pd.read_parquet(parquet_path))
+        metadata_path.write_text(json.dumps(meta, indent=4), encoding="utf-8")
+    return meta.get("fingerprint")
 
 def save_artifacts(
     df: pd.DataFrame,
@@ -239,6 +267,7 @@ def save_artifacts(
     metadata = asdict(config)
     metadata["description"] = "Synthetic resume dataset for age proxy bias experiment"
     metadata["score_component_columns"] = SCORE_COMPONENT_COLUMNS
+    metadata["fingerprint"] = dataset_fingerprint(pd.read_parquet(out / parquet_name))   # <-- added
     with open(out / metadata_name, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=4)
 
@@ -481,6 +510,18 @@ def compute_label_components(df: pd.DataFrame, config: GenerationConfig, rng: np
 # -----------------------------
 # Main generator
 # -----------------------------
+
+def load_or_generate(path, generate_fn, *, force=False, label=""):
+    """Load a parquet if present (unless force); else generate, save, and return.
+    Returns (df, generated) so callers can decide whether to (re)write metadata."""
+    if path.exists() and not force:
+        df = pd.read_parquet(path)
+        print(f"[cache] loaded {label or path.name}: {df.shape}")
+        return df, False
+    df = generate_fn()
+    df.to_parquet(path, index=False)
+    print(f"[generate] wrote {label or path.name}: {df.shape}")
+    return df, True
 
 def generate_synthetic_resumes(config: GenerationConfig, attach_score_components: bool = True) -> pd.DataFrame:
     """Generate features, compute the decomposed callback score, threshold to a label.

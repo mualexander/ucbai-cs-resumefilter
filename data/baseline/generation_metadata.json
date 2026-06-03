@@ -23,5 +23,6 @@
         "score_explicit_age_penalty",
         "score_noise",
         "score_final"
-    ]
+    ],
+    "fingerprint": "2242b52cfec7679e"
 }
