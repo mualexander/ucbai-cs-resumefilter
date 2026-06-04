@@ -13,6 +13,13 @@ features and must never enter a model input or similarity space.
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
+# Display/aggregation order for the five age bands. Shared by every notebook
+# (02-08); previously hand-typed per notebook, where one typo would silently
+# reindex a table to NaN rows.
+# ---------------------------------------------------------------------------
+AGE_ORDER: list[str] = ["<30", "30-39", "40-49", "50-59", "60+"]
+
+# ---------------------------------------------------------------------------
 # The 51 screening features (order is stable and matches notebooks 02/05/06).
 # ---------------------------------------------------------------------------
 CANONICAL_FEATURES: list[str] = [
@@ -118,6 +125,7 @@ def validate_features(df, *, strict: bool = True) -> list[str]:
 
 
 # Self-check on import: the curated lists must be internally consistent.
+assert len(AGE_ORDER) == 5 and len(set(AGE_ORDER)) == 5
 assert len(CANONICAL_FEATURES) == 51, len(CANONICAL_FEATURES)
 assert len(CANONICAL_FEATURES) == len(set(CANONICAL_FEATURES)), "duplicate feature names"
 assert set(PROXY_CLUSTER) <= set(CANONICAL_FEATURES)
