@@ -4,23 +4,25 @@
 
 This project asks whether résumé-screening systems can produce **age-related disparities without using age as an input** — and, when they do, what actually drives the direction and size of the gap.
 
-The work combines a controlled synthetic testbed, U.S. labor-market context (CPS), full-text résumé screening against job descriptions and against incumbent profiles, and a supplementary real-résumé validation. Across these settings the finding is consistent and specific:
+The work combines a controlled synthetic testbed, U.S. labor-market context from CPS, structured supervised screening, structured similarity screening, full-text résumé screening against job descriptions and incumbent profiles, and a supplementary real-résumé validation.
 
-> Facially-neutral screening **transmits** age disparities rather than amplifying them. Job-relevant features (experience, tenure, title, technology mix, salary) act as a redundant proxy for age, so removing any single proxy does nothing. What sets the **direction** of the disparity is not the résumés but the **screening target's composition**: scoring the same résumés against a mid-career incumbent pool penalizes older candidates, while scoring them against a senior job description favors them.
+The central finding is specific rather than universal:
 
-The qualitative results are robust; the one place the controlled mechanism does **not** cleanly reproduce on real data — the incumbent-similarity swap in Notebook 09 — is reported as inconclusive rather than smoothed over.
+> Facially neutral screening can **transmit** age-related disparities without using age directly. Ordinary résumé features — experience, tenure, title, technology mix, salary expectation, and related signals — act as redundant age proxies. Removing one obvious proxy, such as `graduation_year`, does little. The **direction** of a screening disparity depends heavily on the screening target: scoring the same résumés against a mid-career incumbent/reference pool penalizes older candidates, while scoring them against a senior job description can favor them.
 
-### Headline: where the score gap comes from
+The strongest mechanisms are established in the controlled synthetic setting. The real-résumé validation supports the job-description seniority mechanism, but the incumbent-reference mechanism does **not** cleanly transfer to the external corpus and is reported as inconclusive.
 
-Decomposing the structured callback-score gap between the strongest mid-career band (`30-39`) and the oldest band (`60+`) — a raw gap of **0.142** — attributes it almost entirely to feature structure, not to any explicit age term:
+### Headline: where the structured score gap comes from
+
+Decomposing the structured callback-score gap between the strongest mid-career band (`30-39`) and the oldest band (`60+`) — a systematic score gap of about **0.142** — attributes the gap primarily to feature structure rather than to an explicit age term:
 
 | Source | Share of the `30-39` vs `60+` score gap |
 |---|---:|
-| **Structural** (job-relevant features that correlate with age) | **82%** |
-| **Explicit** age term in the label generator | 19% |
-| **Base merit** (age-independent quality) | −1% |
+| **Structural**: job-relevant features that correlate with age | **82%** |
+| **Explicit** age term in the label generator | **19%** |
+| **Base merit**: age-independent quality | **−1%** |
 
-The explicit age knob contributes a minority of the gap; the dominant channel is the correlated feature structure that survives every "remove the obvious proxy" fix tested below. (Shares are rounded and need not sum to exactly 100%.)
+The explicit age knob contributes a minority of the gap. The dominant channel is the correlated feature structure that survives the “remove the obvious proxy” fixes tested below. Shares are rounded and need not sum to exactly 100%.
 
 ---
 
@@ -30,10 +32,10 @@ Can supervised and embedding-based résumé-screening systems reproduce age-rela
 
 More specifically:
 
-- Do structured résumé features predict callbacks in ways that disadvantage older candidates, and does the model *amplify* the disparity in its labels or merely *transmit* it?
+- Do structured résumé features predict callbacks in ways that disadvantage older candidates, and does the model amplify the disparity in its labels or mainly transmit it?
 - Does removing `graduation_year` — or any single proxy — materially reduce the disparity?
-- Can age group still be inferred once age and its obvious proxies are removed, and does mere predictability imply a disparity?
-- Do similarity-based screens favor whoever resembles the reference population, and does swapping the reference reverse the gradient?
+- Can age group still be inferred once age and obvious age markers are removed, and does mere predictability imply a disparity?
+- Do similarity-based screens favor candidates who resemble the reference population?
 - Does full-text embedding behavior depend on whether candidates are scored against a job description or against incumbent profiles?
 - Do the synthetic mechanisms appear on real résumé text?
 
@@ -44,17 +46,19 @@ More specifically:
 | Notebook | Purpose |
 |---|---|
 | `00_cps_data_prep.ipynb` | Real-world labor-market context from CPS unemployment-duration data. |
-| `01_data_generation.ipynb` | Generates the controlled synthetic résumé dataset (50,000 rows) with known age groups, callback labels, and a built-in negative control; decomposes the score gap. |
-| `02_model_training.ipynb` | Trains the baseline supervised screening models (logistic regression, gradient boosting). |
-| `03_fairness_evaluation.ipynb` | Selection rates, true-positive rates, disparate impact, equal-opportunity difference by age; negative-control check. |
-| `04_ablation_graduation_year.ipynb` | Tests removing `graduation_year` and the full proxy cluster; incremental ablation with confidence intervals. |
-| `05_age_group_predictability.ipynb` | Recovers age group from résumé features with age excluded; recoverability-vs-disparity identity. |
-| `06_similarity_screening_experiment.ipynb` | Structured similarity screening; reference-composition swap. |
-| `07_nlp_fulltext_resume_experiment.ipynb` | Full-text résumés scored against a job-description seniority ladder. |
-| `08_fulltext_incumbent_similarity_experiment.ipynb` | Full-text incumbent-profile similarity; reference swap with embedding-anisotropy correction. |
-| `09_external_resume_career_stage_validation.ipynb` | Applies the framework to real Kaggle résumés with inferred career-stage proxies. |
+| `01_data_generation.ipynb` | Generates the controlled synthetic résumé dataset: 50,000 rows with known age groups, callback labels, and a built-in negative control; decomposes the score gap. |
+| `02_model_training.ipynb` | Trains the baseline supervised screening models: logistic regression and histogram gradient boosting. |
+| `03_fairness_evaluation.ipynb` | Evaluates selection rates, disparate impact, true-positive rates, false-negative rates, and equal-opportunity differences by age; includes the negative-control check. |
+| `04_ablation_graduation_year.ipynb` | Tests removing `graduation_year`, then the full proxy cluster; includes incremental ablation and confidence intervals. |
+| `05_age_group_predictability.ipynb` | Tests how recoverable age group is from résumé features with age excluded; separates recoverability from disparity. |
+| `06_similarity_screening_experiment.ipynb` | Runs structured similarity screening and a reference-composition swap. |
+| `07_nlp_fulltext_resume_experiment.ipynb` | Scores full-text synthetic résumés against a job-description seniority ladder. |
+| `08_fulltext_incumbent_similarity_experiment.ipynb` | Scores full-text synthetic résumés against incumbent/reference profiles; examines raw cosine and mean-centered cosine. |
+| `09_external_resume_career_stage_validation.ipynb` | Applies the framework to real Kaggle résumé text using inferred career-stage proxies. |
 
-A single canonical feature list (`src/features.py`, 51 features) is the source of truth shared by every structured notebook; each one calls `validate_features(df)`, which fails loudly on any schema drift. Proportion comparisons throughout use Wilson confidence intervals.
+The structured modeling notebooks use a canonical feature list from `src/features.py` with **51 trained features** after excluding protected attributes, labels, and label-internal scoring columns. The feature schema is validated where structured features are consumed for modeling or scoring. Proportion comparisons use Wilson confidence intervals where intervals are reported.
+
+Supervised model, fairness, ablation, and age-predictability results use the common **40,000 / 10,000 train/test split**. The structured-similarity, full-text, and external-validation notebooks use separate applicant/reference pools described in their sections.
 
 ---
 
@@ -65,15 +69,18 @@ To ground the project, U.S. labor-market data was analyzed using the Current Pop
 ### Methodology
 
 - Data source: IPUMS CPS Basic Monthly
-- Population: individuals aged 18+
+- Source window: January 2010 through April 2026
+- Population: individuals aged 18+; career-stage summaries use 22+
 - Weighting: CPS person weights (`WTFINL`)
 - Unemployment definition: `EMPSTAT ∈ {20, 21, 22}`
-- Unemployment duration: `DURUNEMP` (weeks)
-- Trend: 3-year rolling average
+- Unemployment duration: `DURUNEMP` in weeks
+- Trend years: full calendar years 2010–2025
+- 2026 treatment: January–April 2026 is partial-year context only, not a comparable annual trend point
+- Trend smoothing: 3-year rolling average
 
 ### Key CPS Results
 
-Mean unemployment **duration** rises monotonically with age (even though the unemployment *rate* falls with age):
+Mean unemployment **duration** rises monotonically with age, even though the unemployment *rate* falls with age:
 
 | Age group | Mean unemployment duration |
 |---|---:|
@@ -82,11 +89,11 @@ Mean unemployment **duration** rises monotonically with age (even though the une
 | `40-49` | 30.0 weeks |
 | `50+` | 32.9 weeks |
 
-![Smoothed unemployment duration by age group](reports/figures/cps/unemployment_duration_age_group_smoothed.png)
+![Smoothed unemployment duration by age group](reports/figures/unemployment_duration_age_group_smoothed.png)
 
 *Figure 1. Smoothed unemployment duration by age group. Older workers face longer re-employment durations across most years.*
 
-This does not show that screening models cause older-worker disadvantage; it establishes that the disadvantage exists in the broader market. The experiments then test whether screening systems reproduce that pattern through proxy features and reference-population effects.
+This CPS analysis is **not** tech-sector-specific. Occupation is not reliably defined for unemployed individuals in CPS, so the CPS section provides broad labor-market context rather than causal evidence about technical hiring or résumé-screening systems. The experiments below test whether screening mechanisms can reproduce age-related disparities through proxy features and reference-population effects.
 
 ---
 
@@ -96,25 +103,25 @@ This does not show that screening models cause older-worker disadvantage; it est
 
 *Figure 2. Synthetic data generation, label construction, and downstream evaluation pipeline.*
 
-The structured dataset is **50,000 résumés** with known age, a 51-feature canonical schema, and callback labels generated under a transparent scoring function. Age is never an input to any screening model.
+The structured dataset contains **50,000 synthetic résumés** with known age, a canonical 51-feature training schema, and callback labels generated under a transparent scoring function. Age and age group are never used as screening-model inputs.
 
-Two design features make the causal reading clean:
+Two design features make the mechanism tests cleaner:
 
-- **A built-in negative control.** The same résumés are re-labeled under four bias settings that share a **byte-identical feature matrix** (features are keyed on a generation seed; only the label's *use* of the features changes). The `negative_control` setting has no callback disparity by construction, so any disparity a model shows under it is a measurement artifact, not a real effect.
-- **A 40,000 / 10,000 train/test split.** All by-age tables in Notebook 03 onward are computed on the 10,000-row held-out test set (≈ 2,494 / 3,001 / 2,501 / 1,494 / 510 across the five age bands).
+- **A built-in negative control.** The same résumés are re-labeled under four bias settings that share the same feature matrix. The `negative_control` setting removes the structural and explicit age-related callback mechanisms, so any large disparity a model shows under it would indicate a pipeline or measurement artifact.
+- **A common supervised train/test split.** Notebooks 02–05 use a 40,000-row training set and a 10,000-row held-out test set, stratified by `age_group × callback` where appropriate. The held-out test-set age counts are approximately 2,494 / 3,001 / 2,501 / 1,494 / 510 across the five age bands.
 
 ---
 
 ## Experiment A — Supervised Screening: Transmit, Not Amplify
 
-Two screening models were trained to predict callbacks from structured features, with age excluded.
+Two screening models were trained to predict callbacks from structured features, with `true_age`, `age_group`, labels, and label-internal `score_*` columns excluded.
 
-| Metric | Logistic regression | Gradient boosting |
+| Metric | Logistic regression | Histogram gradient boosting |
 |---|---:|---:|
 | Accuracy | 0.871 | 0.877 |
 | ROC AUC | 0.951 | 0.954 |
 
-Outcomes vary sharply by age. The model neither invents nor magnifies the gap — it **transmits** the disparity already present in the labels:
+Outcomes vary sharply by age. The models mostly **transmit** the age gradient already present in the labels rather than clearly amplifying it:
 
 | Age group | Actual callback rate | Predicted selection rate (logreg) | True-positive rate | False-negative rate |
 |---|---:|---:|---:|---:|
@@ -128,36 +135,60 @@ Outcomes vary sharply by age. The model neither invents nor magnifies the gap �
 
 ![True-positive rate by age group](reports/figures/tpr_by_age_group.png)
 
-*Figures 3–4. Selection rate and true-positive rate by age group at 50k.*
+*Figures 3–4. Selection rate and true-positive rate by age group.*
 
 ### Disparate impact and the negative control
 
-Against the strongest band, the four-fifths (0.80) rule is breached for the three oldest groups: disparate-impact ratios of **0.682 (40-49)**, **0.307 (50-59)**, and **0.111 (60+)**; equal-opportunity difference **0.303**.
+Using `30-39` as the reference group, the four-fifths rule is breached for the three oldest groups under the logistic model:
 
-The negative control confirms these are not pipeline artifacts. Re-running the identical pipeline on the no-disparity labels collapses every flag:
+| Age group | Disparate-impact ratio |
+|---|---:|
+| `40-49` | 0.682 |
+| `50-59` | 0.307 |
+| `60+` | 0.111 |
+
+The maximum absolute equal-opportunity difference is **0.303**. These label-based metrics should be read cautiously because the labels themselves are intentionally age-biased. The cleaner fairness lens is prediction-only selection rate, statistical parity, and disparate impact.
+
+The negative control confirms the canonical gaps are not preprocessing, splitting, or metric artifacts. Re-running the identical pipeline on no-disparity labels collapses every flag:
 
 | Quantity | Canonical labels | Negative control |
 |---|---:|---:|
-| Selection-rate parity gap (max − min) | 0.579 | 0.034 |
+| Selection-rate parity gap, max − min | 0.579 | 0.034 |
 | Minimum disparate-impact ratio | 0.111 | 0.974 |
 | Bands flagged under the four-fifths rule | 3 | 0 |
-| Equal-opportunity difference | 0.303 | 0.040 |
+| Max absolute equal-opportunity difference | 0.303 | 0.040 |
 
-**Reading.** A single decision should be reported from the model that produced it: the logistic model slightly **over-predicts** the `60+` selection rate (7.3% vs an actual 5.3%) — the disadvantage is inherited from the labels, not added by the model. (Per-band counts in the oldest group are small, so the `60+` line is read with its confidence interval.)
+**Reading.** The logistic model slightly over-predicts the `60+` selection rate relative to the actual label rate: 7.3% predicted versus 5.3% actual. The disadvantage is inherited from the labels rather than added by the model. The `60+` test group is also the smallest group, so its line should be read with its confidence interval.
 
 ---
 
 ## Experiment B — The Graduation-Year Ablation and the Proxy Cluster
 
-| Variant | Features | ROC AUC | `30-39` − `60+` selection gap |
-|---|---:|---:|---:|
-| With `graduation_year` | 51 | 0.951 | 0.579 |
-| Without `graduation_year` | 50 | 0.951 | ≈ same (CIs overlap at every band) |
-| Without the full proxy cluster | 40 | 0.867 | **−0.007** |
+| Variant | Features | ROC AUC | `30-39` − `60+` selection gap | Four-fifths flags |
+|---|---:|---:|---:|---:|
+| With `graduation_year` | 51 | 0.951 | 0.579 | 3 |
+| Without `graduation_year` | 50 | 0.951 | 0.582 | 3 |
+| Without the full proxy cluster | 40 | 0.867 | −0.007 | 0 |
 
-Removing `graduation_year` changes nothing: the with- and without-`graduation_year` selection rates have **overlapping Wilson intervals at every age band**, so the two proxies are mutually substitutable. Removing the entire correlated cluster (graduation year, experience, tenure, title, tech mix, salary) is what collapses the disparity — the selection rate flattens to ≈ 0.50 across all ages and every four-fifths flag clears — and it costs real accuracy (AUC 0.951 → 0.867).
+Removing `graduation_year` changes essentially nothing: the with- and without-`graduation_year` selection rates have overlapping Wilson intervals at every age band. Removing the full correlated proxy cluster collapses the disparity and clears every four-fifths flag, but it also reduces predictive performance.
 
-An incremental ablation makes the redundancy explicit: dropping the proxies one at a time holds the gap near 0.58 → 0.56 through the first seven removals; it only collapses after the eleventh feature (salary) is removed. No single feature is load-bearing — each dropped proxy is absorbed by the others.
+The proxy cluster removed in the diagnostic arm is:
+
+```text
+graduation_year
+years_experience_total
+years_experience_relevant
+num_employers
+avg_tenure_years
+management_years
+reports_max
+most_recent_title
+legacy_tech_count
+modern_tech_count
+salary_expectation_usd
+```
+
+An incremental ablation makes the redundancy explicit. Dropping proxies one at a time leaves the gap near 0.58 through most of the sequence; it only collapses after the full cluster is removed. This fixed-order sweep is diagnostic, not a formal causal feature-importance ranking. No single feature should be described as solely responsible.
 
 ![Ablation: predicted selection rate by age](reports/figures/ablation_predicted_rate_by_age.png)
 
@@ -167,28 +198,28 @@ An incremental ablation makes the redundancy explicit: dropping the proxies one 
 
 ---
 
-## Experiment C — Age Recoverability (and Why It Is Not the Same as Disparity)
+## Experiment C — Age Recoverability, and Why It Is Not the Same as Disparity
 
-Models trained to predict **age group** from résumé features (age excluded) recover it far above the 30% majority-class baseline:
+Models trained to predict **age group** from résumé features, with age excluded, recover age group far above the 30% majority-class baseline:
 
 | Feature set | Logreg accuracy | Gradient-boosting accuracy | Lift over baseline |
 |---|---:|---:|---:|
 | With `graduation_year` | 0.941 | 0.938 | ≈ 3.1× |
 | Without `graduation_year` | 0.900 | 0.902 | ≈ 3.0× |
-| Without `graduation_year` **and** experience | 0.850 | 0.846 | ≈ 2.8× |
+| Without `graduation_year` and experience | 0.850 | 0.846 | ≈ 2.8× |
 
-Age stays ≈ 3× recoverable without `graduation_year`, and dropping the two experience columns on top of it still leaves it ≈ 2.8× recoverable — the same redundant encoding seen in Experiment B, from the recoverability side.
+Age remains highly recoverable without `graduation_year`. Even dropping the two experience columns still leaves age group about 2.8× recoverable over the majority-class baseline. This is the recoverability side of the same proxy-substitution story from Experiment B.
 
-But recoverability is **necessary, not sufficient**, for a disparity — and this can be shown as an exact identity. Because the bias settings share a byte-identical feature matrix, age is recoverable in the `negative_control` data to the **same accuracy, to the digit**:
+But recoverability is **necessary, not sufficient**, for a disparity. Because the canonical and negative-control settings share the same feature matrix, age is recoverable in both to exactly the same accuracy:
 
-```
+```text
 age recoverability (logreg, without graduation_year)
   canonical        : 0.9001
   negative control : 0.9001
   difference       : 0.00e+00
 ```
 
-Age is exactly as predictable where there is **no** callback disparity. Predictability sets up the leak; the scoring function decides whether it flows.
+Age is exactly as predictable where there is no callback disparity. Predictability creates the possibility of proxy use; the scoring function determines whether that proxy structure produces a disparity.
 
 ---
 
@@ -196,11 +227,11 @@ Age is exactly as predictable where there is **no** callback disparity. Predicta
 
 ![Similarity-based screening](reports/diagrams/similarity_experiment.png)
 
-*Figure 7. Similarity screening disadvantages candidates who do not resemble the reference population — but the direction is a property of the reference, not the résumés.*
+*Figure 7. Similarity screening favors candidates who resemble the reference population. The direction is a property of the reference, not only the résumés.*
 
-Applicants were scored by cosine similarity to a reference pool, with no training labels. Against a conventional "successful employee" reference (**R1** — mid-experience, senior titles, modern ≥ legacy tech), which is **100% under 50 by construction**, similarity falls steeply with age and the oldest bands are screened out entirely:
+Applicants were scored by cosine similarity to a structured reference pool, with no training labels. Against a synthetic mid-career “successful employee” reference pool (**R1**) that is 100% under 50 by construction, similarity falls steeply with age and the oldest bands are effectively screened out:
 
-| Age group | Similarity vs R1 (mid-career) | Screen-pass rate vs R1 | Similarity vs R2 (age-balanced) |
+| Age group | Similarity vs R1, mid-career | Screen-pass rate vs R1 | Similarity vs R2, age-balanced |
 |---|---:|---:|---:|
 | `<30` | 0.551 | 94.4% | 0.090 |
 | `30-39` | 0.452 | 54.0% | 0.246 |
@@ -208,23 +239,23 @@ Applicants were scored by cosine similarity to a reference pool, with no trainin
 | `50-59` | −0.029 | 0.0% | 0.550 |
 | `60+` | −0.167 | 0.0% | 0.580 |
 
-Scoring the **same applicants** against an age-balanced reference (**R2**) **reverses the gradient** — older candidates now score highest. The disparity direction is set by who is in the reference pool, not by the résumés.
+Scoring the **same applicants** against an age-balanced reference pool (**R2**) reverses the age gradient: older candidates now score highest. The disparity direction is set by reference composition, not by a fixed property of the applicants.
 
 ![Reference-composition swap](reports/figures/similarity_reference_swap.png)
 
 *Figure 8. The R1 → R2 reference swap reverses the age gradient on identical applicants.*
 
-(A matched-pair check — building a "senior" variant by pushing every feature away from the mid-career template — finds it less similar in 100% of pairs, mean delta −0.332. This is a geometric near-tautology and is reported only as a monotonicity sanity check, not as evidence. Removing `graduation_year` shifts similarity by a mean of 0.019.)
+A matched-pair check — building a “senior” variant by pushing every feature away from the mid-career template — finds the senior variant less similar in 100% of pairs, with mean delta −0.332. This is a geometric near-tautology and is reported only as a monotonicity sanity check, not as independent evidence. Removing `graduation_year` changes mean similarity by only 0.019.
 
 ---
 
 ## Experiment E — Full-Text Screening Against a Job-Description Ladder
 
-Structured résumés were rendered into full text under factual-preservation constraints (an independent text-level audit checks for placeholder artifacts, leaked field codes, and explicit age language; a faithfulness/text-clean gate drops 74 of the rendered résumés, and the result is unchanged with or without it). The full-text corpus holds 12,500 résumés per generation mode.
+Structured résumés were rendered into full text under factual-preservation constraints. A faithfulness and text-cleanliness audit checks for placeholder artifacts, leaked field codes, and explicit age language. The downstream screening analysis excludes **74** text-flagged rows from the rendered corpus. The full-text corpus contains 12,500 résumés per generation mode before filtering.
 
-Scoring the **same** résumés against a ladder of job descriptions, the favored age band climbs with the JD's seniority:
+Scoring the same résumés against a ladder of job descriptions, the favored age band rises with the JD’s seniority:
 
-| Job description | Favored (highest-similarity) age band |
+| Job description | Favored highest-similarity age band |
 |---|---|
 | Junior SWE | `30-39` |
 | Mid SWE | `30-39` |
@@ -232,25 +263,43 @@ Scoring the **same** résumés against a ladder of job descriptions, the favored
 | Staff SWE | `40-49` |
 | Engineering Manager | `60+` |
 
-Against the manager JD, the screen-in rate rises with age — **24.6% / 40.8% / 52.8% / 52.0% / 54.9%** (Wilson CIs, ≈ 2,490 per band; population-reweighted overall rate 0.421). The gradient is correlated with résumé length (r = 0.20) but survives length adjustment (length-adjusted similarity still climbs monotonically, −0.015 → +0.008).
+Against the engineering-manager JD, the top-45% screen-in rate rises with age:
+
+| Age group | Screen-in rate |
+|---|---:|
+| `<30` | 24.6% |
+| `30-39` | 40.8% |
+| `40-49` | 52.8% |
+| `50-59` | 52.0% |
+| `60+` | 54.9% |
+
+The similarity gradient is partly correlated with résumé length (`r = 0.20`) but survives length adjustment. The length-adjusted engineering-manager similarity still rises from −0.015 for `<30` to +0.008 for `60+`.
 
 ![JD seniority sweep](reports/figures/nlp07_jd_seniority_sweep.png)
 
-*Figure 9. The favored age band marches up the age range as the job description gets more senior.*
+*Figure 9. The favored age band moves up the age range as the job description becomes more senior.*
 
-The within-notebook two-target contrast is the key point: the **same résumés** that the manager-JD screen favors with age (24.6% → 54.9%) are penalized with age by the structured callback model (59.5% → 5.4%). Opposite gradients, same people — the screening target decides the direction.
+This section is an important counterweight to the structured callback model. The same résumés that the engineering-manager JD screen favors with age are penalized with age by the structured callback model. Opposite gradients on the same candidate population show that the screening target helps determine the direction of the disparity.
 
 ---
 
-## Experiment F — Full-Text Incumbent Similarity, Read Through the Anisotropy Correction
+## Experiment F — Full-Text Incumbent Similarity and Embedding Anisotropy
 
-Notebook 08 scores the same full-text résumés against an **incumbent reference pool**, swapping a mid-career reference (R1, again 100% under 50) for an age-balanced one (R2). The honest headline is a methodological one.
+Notebook 08 scores full-text synthetic résumés against incumbent/reference profiles, swapping a mid-career reference pool (**R1**, again 100% under 50) for an age-balanced reference pool (**R2**). This experiment is partly methodological.
 
-**On raw cosine, the swap washes out.** Same-domain résumé embeddings are anisotropic — pairwise cosines cluster near 0.8 — so the R1 and R2 centroids are nearly collinear and both targets peak at `40-49` (similarity 0.78–0.81 across all ages; corr(similarity, tokens) = 0.53, i.e. largely length-driven). A naïve raw-cosine incumbent screen would look roughly **age-neutral**.
+### Raw cosine mostly washes out the reference swap
 
-**Under the standard mean-centering correction, the swap reappears and reverses,** replicating Experiment D:
+Same-domain résumé embeddings are anisotropic: pairwise cosines cluster around a shared “average résumé” direction. In raw cosine space, R1 and R2 centroids are nearly collinear and both raw targets peak around `40-49`. Raw R1 similarity ranges only from about 0.784 to 0.806 across age groups, and raw R1 similarity is strongly correlated with token count (`r = 0.529`).
 
-| Age group | Centered similarity vs R1 | Centered swap effect (R2 − R1) |
+![Raw incumbent reference swap](reports/figures/nlp08_reference_swap.png)
+
+*Figure 10. Raw cosine compresses the R1/R2 distinction and mostly washes out the incumbent reference-composition swap.*
+
+### Mean-centered cosine reveals the reference-composition pattern
+
+After mean-centering the embedding space, the reference-composition pattern reappears directionally: the mid-career reference favors younger and mid-career candidates, while the age-balanced reference shifts similarity toward older candidates.
+
+| Age group | Centered similarity vs R1 | Centered swap effect, R2 − R1 |
 |---|---:|---:|
 | `<30` | 0.074 | −0.076 |
 | `30-39` | 0.081 | −0.082 |
@@ -258,19 +307,49 @@ Notebook 08 scores the same full-text résumés against an **incumbent reference
 | `50-59` | −0.056 | +0.062 |
 | `60+` | −0.069 | +0.076 |
 
-R1 favors the young/mid bands; switching to the balanced reference helps older candidates and hurts younger ones. The masking is itself the finding: a real incumbent screen can look fair on raw cosine while the age-composition bias sits latent in the representation, surfacing under ordinary normalization.
+Under a top-45% screen by centered R1 similarity, screen-in rates fall with age:
 
-![Incumbent reference swap](reports/figures/nlp08_reference_swap.png)
+| Age group | Centered R1 screen-in rate |
+|---|---:|
+| `<30` | 80.2% |
+| `30-39` | 75.3% |
+| `40-49` | 36.4% |
+| `50-59` | 21.9% |
+| `60+` | 17.0% |
 
-*Figure 10. Raw cosine masks the incumbent swap; mean-centering recovers the R1 → R2 reversal.*
+The honest reading is not “raw embeddings are biased against older workers.” Raw cosine looks roughly age-neutral here. The stronger point is that an incumbent-style screen can look roughly neutral under raw cosine while reference-composition effects remain latent and become visible under normalization.
 
 ---
 
 ## Experiment G — External Validation on Real Résumé Text
 
-Notebook 09 applies the framework to a real Kaggle résumé corpus (9,000 rows → **5,514 technical résumés** after filtering and de-duplication). It has **no true age labels**, so it uses **inferred career-stage proxies** (stated years, title seniority): early 80 / mid 2,718 / senior 1,303 / very-senior 213 / unknown 1,200, with 65% stating years of experience. This is an external-validity check, explicitly secondary to the controlled experiments; a weak result is informative, not a failure.
+Notebook 09 applies the framework to a real Kaggle résumé corpus. The raw input contains 9,000 rows. After de-duplication, filtering, and technical résumé selection, the analysis uses **5,514 technical résumés**.
 
-**The job-description mechanism replicates cleanly.** The favored career stage climbs as the JD goes junior → manager (junior/mid JD → `mid_career`; senior/staff/manager JD → `very_senior`), and the manager-JD screen-in rate rises monotonically with **non-overlapping** Wilson intervals:
+This external dataset has **no true age labels**, so the notebook uses inferred career-stage proxies based on stated years of experience and title seniority. These are not protected-attribute labels. The stage distribution is imbalanced:
+
+| Career stage | Count |
+|---|---:|
+| `early_career` | 80 |
+| `mid_career` | 2,718 |
+| `senior_career` | 1,303 |
+| `very_senior` | 213 |
+| `unknown` | 1,200 |
+
+About 65% of résumés state years of experience. The external validation is therefore secondary to the controlled synthetic experiments.
+
+### The job-description mechanism replicates directionally and strongly
+
+The favored career stage rises as the JD moves from junior to manager:
+
+| Job description | Favored inferred career stage |
+|---|---|
+| Junior SWE | `mid_career` |
+| Mid SWE | `mid_career` |
+| Senior SWE | `very_senior` |
+| Staff SWE | `very_senior` |
+| Engineering Manager | `very_senior` |
+
+The engineering-manager top-screen rate rises monotonically by inferred career stage:
 
 | Career stage | Manager-JD screen rate | 95% CI |
 |---|---:|---|
@@ -279,85 +358,105 @@ Notebook 09 applies the framework to a real Kaggle résumé corpus (9,000 rows �
 | `senior_career` | 56.9% | [54.2%, 59.5%] |
 | `very_senior` | 70.4% | [64.0%, 76.1%] |
 
-This is **not** a length artifact (corr with tokens = 0.02; length-adjusted similarity still climbs) and **not** a legacy-stack artifact (the manager-JD similarity barely moves across legacy-tech tertiles, r = 0.07, while modern-tech presence tracks it far more, r ≈ 0.26).
+This is not primarily a length artifact: the correlation between manager-JD similarity and token count is only 0.019, and the length-adjusted similarity still rises by career stage. It is also not explained by legacy technology count, which is only weakly correlated with manager-JD similarity (`r = 0.069`).
 
-**The incumbent mechanism does not cleanly transfer — reported as inconclusive.** On raw cosine it washes out (anisotropy again). The centered swap effect is positive across stages (+0.01 → +0.06), seeming to replicate — but it is confounded by the corpus's heavy mid-career concentration, and once the applicant pool is stage-balanced the sign **flips** for the senior stages (balanced swap effect +0.06 / +0.18 / −0.03 / −0.07). The reference-swap result therefore holds firmly only in the controlled synthetic setting; on this real corpus it is not established.
+### The incumbent mechanism does not cleanly transfer
+
+The incumbent-reference result is inconclusive on this external corpus. Raw cosine again washes out much of the signal. Centered cosine initially appears to show a positive R2 − R1 swap effect across stages, but the result is confounded by the corpus’s heavy mid-career concentration. Once the applicant pool is stage-balanced, the sign flips for senior stages. Therefore, the reference-swap mechanism is established in the controlled synthetic setting, but not established by this external real-résumé dataset.
 
 ---
 
 ## Consolidated Controls
 
-Each mechanism is paired with a control that could have falsified it:
+Each mechanism is paired with a control that could have weakened or falsified it:
 
 | Control | What it tests | Result |
 |---|---|---|
-| **Negative control** (03) | Is the disparity real or a pipeline artifact? | Parity gap 0.579 → 0.034; min DI 0.111 → 0.974; 3 flags → 0; EOD 0.303 → 0.040. Real. |
-| **Recoverability identity** (05) | Does predictability of age imply a disparity? | Age recoverable to the same accuracy (0.9001) with or without a disparity. No — necessary, not sufficient. |
-| **Cluster ablation** (04) | Is one proxy responsible? | Single-proxy removal: no change (CIs overlap). Whole-cluster removal: gap → −0.007, at AUC 0.951 → 0.867. Redundant, distributed. |
-| **Reference swap, structured** (06) | Is the direction a property of the résumés? | R1 → R2 reverses the gradient on identical applicants. No — it is a property of the reference. |
-| **JD seniority sweep** (07) | Does the screening target set the direction? | Favored band climbs junior → manager; same résumés show the opposite gradient under the callback model. Yes. |
-| **Incumbent swap + anisotropy** (08) | Does the swap survive in text embeddings? | Washed out on raw cosine; recovered and reversed under mean-centering. Yes, once anisotropy is corrected. |
-| **External validation** (09) | Do the mechanisms appear on real text? | JD mechanism replicates (non-overlapping CIs, length- and stack-independent); incumbent mechanism inconclusive (sign flips under stage-balancing). |
+| **Negative control** in Notebook 03 | Is the disparity real or a pipeline artifact? | Parity gap 0.579 → 0.034; min DI 0.111 → 0.974; 3 flags → 0; max abs EOD 0.303 → 0.040. |
+| **Recoverability identity** in Notebook 05 | Does age predictability imply a callback disparity? | Age is recoverable to exactly the same accuracy, 0.9001, with or without callback disparity. Predictability is necessary, not sufficient. |
+| **Cluster ablation** in Notebook 04 | Is one proxy responsible? | Single-proxy removal does not fix the gap. Whole-cluster removal collapses the gap to −0.007, at AUC cost 0.951 → 0.867. |
+| **Structured reference swap** in Notebook 06 | Is the direction fixed by the résumés? | R1 → R2 reverses the age gradient on identical applicants. |
+| **JD seniority sweep** in Notebook 07 | Does the target set the direction? | Favored band rises as the JD gets more senior. |
+| **Raw vs centered incumbent similarity** in Notebook 08 | Does embedding geometry affect what is visible? | Raw cosine washes out the swap; mean-centered cosine reveals a reference-composition pattern. |
+| **External validation** in Notebook 09 | Do mechanisms appear on real text? | JD mechanism replicates directionally and strongly; incumbent mechanism is inconclusive. |
 
 ---
 
 ## Consolidated Findings
 
-1. **Explicit age is not required, and the model does not amplify the gap — it transmits it.** Predicted selection rates track the (biased) label rates; the oldest band is, if anything, slightly over-predicted.
-2. **Removing one proxy does nothing.** `graduation_year` and experience are mutually substitutable with the rest of a correlated cluster; only removing the whole cluster collapses the disparity, and at a real accuracy cost.
-3. **Age is ≈ 3× recoverable from ordinary résumé content** even with age and its obvious proxies removed — but recoverability is necessary, not sufficient: it is identical where there is no disparity at all.
-4. **The screening target sets the direction.** A mid-career incumbent reference penalizes older candidates; an age-balanced reference reverses it; a senior job description favors them. The same résumés flip sign across targets.
-5. **Embedding anisotropy can mask the effect.** On raw cosine an incumbent screen can look age-neutral while the bias sits latent in the representation, surfacing under standard normalization.
-6. **The job-description mechanism replicates on real résumé text; the incumbent mechanism does not cleanly transfer** and is reported as inconclusive on the external corpus.
+1. **Explicit age is not required.** The supervised models reproduce large age-related selection disparities while excluding `true_age` and `age_group`.
+2. **The supervised models mainly transmit the label gradient.** They do not need to add explicit age discrimination; they learn the callback pattern embedded in the labels.
+3. **Removing one proxy does not fix the issue.** Dropping `graduation_year` leaves the 30–39 vs 60+ selection gap essentially unchanged. The proxy cluster is distributed and redundant.
+4. **Age is highly recoverable from ordinary résumé features.** Age group remains about 3× recoverable over the majority baseline without `graduation_year`, but recoverability alone does not imply disparity.
+5. **The screening target sets the direction.** A mid-career incumbent/reference target penalizes older candidates; an age-balanced reference reverses the structured similarity gradient; a senior job-description target favors older or more senior candidates.
+6. **Embedding normalization matters.** In full-text incumbent similarity, raw cosine can hide reference-composition effects that become visible after mean-centering.
+7. **The external real-résumé validation is mixed by design.** The job-description seniority mechanism transfers directionally; the incumbent-reference swap does not cleanly replicate and is reported as inconclusive.
 
 ---
 
-## Hypothesis (Updated)
+## Updated Hypothesis
 
-> Older workers already face longer re-employment durations. Résumé-screening systems reproduce and **redistribute** that disadvantage — rather than amplifying it — whenever job-relevant features proxy for age and a reference population or screening target encodes an age composition. The direction of the resulting disparity is determined by the target, not by the résumés.
+> Older workers already face longer re-employment durations in the broader labor market. Résumé-screening systems can reproduce and redistribute that disadvantage whenever job-relevant features proxy for age and the target, label, or reference population encodes an age composition. The direction of the resulting disparity is determined by the screening target and objective, not by the résumés alone.
 
 ---
 
 ## Conclusion
 
-The project does not claim that every résumé-screening model disadvantages older candidates. The defensible claim is narrower and more useful: such systems can produce age disparities through several distinct channels — supervised transmission of biased labels, redundant proxy leakage across correlated features, reference-population similarity, incumbent-profile targets, and embedding behavior that depends on the comparison target — and the direction of the disparity is a property of the target, not the applicants.
+The project does not claim that every résumé-screening model disadvantages older candidates. The defensible claim is narrower and more useful: résumé-screening systems can produce age-related disparities through several distinct channels — supervised transmission of biased labels, redundant proxy leakage across correlated features, reference-population similarity, incumbent-profile targets, and embedding behavior that depends on the comparison target and normalization.
 
-The practical implication is that dropping protected attributes or one obvious proxy is not a sufficient control. Screening systems need to be audited across age groups, the full proxy cluster, reference-set construction, target definition, screening thresholds, and the embedding normalization used to compute similarity.
+The practical implication is that dropping protected attributes or one obvious proxy is not enough. Screening systems should be audited across age groups, correlated proxy clusters, reference-set construction, target definition, screening thresholds, and embedding normalization choices.
 
 ---
 
 ## Notes and Limitations
 
-- Synthetic data is used for controlled mechanism testing; the CPS provides labor-market context, not causal evidence about screening systems.
-- The external Kaggle corpus has no true age labels; the career-stage proxies are not protected attributes, and that notebook is small-N.
-- Similarity results depend on the embedding model, reference-set composition, thresholding, and — as Experiment F shows — the anisotropy correction applied.
-- The incumbent-swap mechanism is established only in the controlled synthetic setting.
+- Synthetic data is used for controlled mechanism testing. It is not a claim about the exact magnitude of real-world discrimination.
+- CPS provides broad labor-market context, not causal evidence about résumé-screening systems and not tech-sector-specific unemployment evidence.
+- The label-generation process intentionally encodes a callback disparity so that downstream transmission, ablation, and negative-control tests can be interpreted.
+- Label-based metrics such as TPR, FNR, and equal-opportunity difference inherit the biased-label problem and are included as diagnostics rather than as the cleanest fairness lens.
+- Similarity values should be interpreted as cross-group ordering under a fixed pipeline, not as absolute measures of résumé quality.
+- Full-text embedding results depend on the embedding model, reference-set composition, thresholding, and normalization. Notebooks 07–08 use OpenAI `text-embedding-3-small`.
+- The external Kaggle corpus has no true age labels. Career-stage labels are inferred from résumé text and are noisy, imbalanced, and not protected-attribute labels.
+- The external `early_career` and `very_senior` groups are small, so endpoint estimates should be read with their Wilson intervals.
+- The incumbent-reference mechanism is established in the controlled synthetic setting but is inconclusive on the external real-résumé corpus.
 - The study addresses age-related proxy bias and does not evaluate intersectional effects.
 
 ---
 
 ## Reproducing the Analysis
 
-### Structured experiments (Notebooks 01–06)
+### CPS data: Notebook 00
 
-Run `01_data_generation.ipynb` first (produces the 50,000-row dataset and the negative-control variants under `data/experiments/`), then `02` through `06` in order. All structured notebooks import the canonical feature list from `src/features.py`.
+The CPS extract is not included due to size. Create an account at IPUMS CPS, extract Basic Monthly CPS with variables `AGE`, `EMPSTAT`, `DURUNEMP`, `OCC2010`, `WTFINL`, `YEAR`, and `MONTH`, save the extract under `data/raw/ipums_cps/`, then run `00_cps_data_prep.ipynb`.
 
-### CPS data (Notebook 00)
+### Structured experiments: Notebooks 01–06
 
-The CPS extract is not included due to size. Create an account at IPUMS CPS, extract Basic Monthly CPS with variables `AGE`, `EMPSTAT`, `DURUNEMP`, `OCC2010`, `WTFINL`, `YEAR`, `MONTH`, save under `data/raw/ipums_cps/`, then run `00_cps_data_prep.ipynb`.
+Run `01_data_generation.ipynb` first. It produces the 50,000-row synthetic résumé dataset and associated label/bias-setting artifacts. Then run `02_model_training.ipynb` through `06_similarity_screening_experiment.ipynb` in order. Structured modeling notebooks consume the canonical feature list from `src/features.py`.
 
-### Full-text and external experiments (Notebooks 07–09)
+### Full-text experiments: Notebooks 07–08
 
-Notebooks 07–08 use cached embeddings of the generated full-text corpus. Notebook 09 uses the Kaggle Resume Dataset; save the CSV as `data/external/resume_dataset.csv`, then run `09_external_resume_career_stage_validation.ipynb`.
+Notebooks 07–08 use cached embeddings of the generated full-text résumé corpus. The executed runs use OpenAI `text-embedding-3-small`. Re-running these notebooks may require the cached embedding parquet files or API access, depending on the notebook settings.
+
+### External experiment: Notebook 09
+
+Notebook 09 uses the Kaggle Resume Dataset. Save the CSV as:
+
+```text
+data/external/resume_dataset.csv
+```
+
+Then run `09_external_resume_career_stage_validation.ipynb`.
 
 ---
 
 ## Repository Outputs
 
-Key outputs are written under `data/experiments/`, `reports/tables/`, and `reports/figures/`. Figures referenced above:
+Key outputs are written under `data/experiments/`, `reports/tables/`, `reports/figures/`, and `models/`.
+
+Figures referenced above:
 
 ```text
-reports/figures/cps/unemployment_duration_age_group_smoothed.png
+reports/figures/unemployment_duration_age_group_smoothed.png
 reports/figures/selection_rate_by_age_group.png
 reports/figures/tpr_by_age_group.png
 reports/figures/ablation_predicted_rate_by_age.png
@@ -369,4 +468,28 @@ reports/diagrams/data_generation_pipeline.png
 reports/diagrams/similarity_experiment.png
 ```
 
-Notebook 09's results are reported as tables (`reports/tables/ext09_*.csv`) rather than figures.
+Additional useful tables:
+
+```text
+reports/tables/label_decomposition_by_age.csv
+reports/tables/callback_rate_by_age_bias_settings.csv
+reports/tables/structural_strength_sweep.csv
+reports/tables/model_comparison_metrics.csv
+reports/tables/model_predicted_rate_by_age.csv
+reports/tables/fairness_summary_logreg.csv
+reports/tables/fairness_summary_hgb.csv
+reports/tables/fairness_canonical_vs_negative_control.csv
+reports/tables/ablation_three_arm_comparison.csv
+reports/tables/ablation_incremental_cluster.csv
+reports/tables/age_group_predictability_results.csv
+reports/tables/similarity_reference_composition_swap.csv
+reports/tables/nlp07_similarity_by_jd_and_age.csv
+reports/tables/nlp07_screen_rates_eng_manager.csv
+reports/tables/nlp08_reference_swap_centered.csv
+reports/tables/nlp08_screen_rates_R1_centered.csv
+reports/tables/ext09_jd_similarity_by_stage.csv
+reports/tables/ext09_jd_screen_rates.csv
+reports/tables/ext09_incumbent_swap_centered_balanced.csv
+```
+
+Notebook 09's results are reported as tables rather than figures.
