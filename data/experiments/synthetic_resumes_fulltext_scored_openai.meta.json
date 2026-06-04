@@ -1,0 +1,13 @@
+{
+  "embedder": "openai",
+  "model": "text-embedding-3-small",
+  "prompt_version": [
+    "v6_varied_faithful_plaintext_nolabels"
+  ],
+  "input_fingerprints": {
+    "with_proxies": "60a9a0b62d83c19e",
+    "without_direct_age_proxies": "8a87727f913a205d",
+    "minimal_proxy": "e58633ba9ffda56d"
+  },
+  "rows": 37379
+}

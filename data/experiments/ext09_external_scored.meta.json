@@ -1,0 +1,7 @@
+{
+  "embedder": "openai",
+  "model": "text-embedding-3-small",
+  "source_csv": "resume_dataset.csv",
+  "source_csv_sha256": "affe528e7bdf26be6e5bef96b7d2d4e558883903439bb1eb72154a897febc079",
+  "rows": 5514
+}
