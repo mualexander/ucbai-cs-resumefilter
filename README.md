@@ -24,6 +24,10 @@ Decomposing the structured callback-score gap between the strongest mid-career b
 
 The explicit age knob contributes a minority of the gap. The dominant channel is the correlated feature structure that survives the “remove the obvious proxy” fixes tested below. Shares are rounded and need not sum to exactly 100%.
 
+![Hero figure: the proxy cluster carries the gap; the target sets the direction](reports/figures/hero_proxy_cluster_and_target.png)
+
+*Figure 0. Left: the age gradient in predicted callbacks is unchanged by dropping `graduation_year` and collapses only when the entire correlated proxy cluster is removed — a diagnostic that localizes where age leaks, at a real accuracy cost (AUC 0.951 → 0.867), not a deployable fix. Right: the same full-text résumés produce opposite age gradients under different screening targets — an engineering-manager job description favors older candidates while a mid-career incumbent profile screens them out.*
+
 ---
 
 ## Research Question
