@@ -32,7 +32,7 @@ Can supervised and embedding-based résumé-screening systems reproduce age-rela
 
 More specifically:
 
-- Do structured résumé features predict callbacks in ways that disadvantage older candidates, and does the model amplify the disparity in its labels or mainly transmit it?
+- Do structured résumé features predict callbacks in ways that disadvantage older candidates, and does the model amplify the disparity present in the labels, or mainly transmit it?
 - Does removing `graduation_year` — or any single proxy — materially reduce the disparity?
 - Can age group still be inferred once age and obvious age markers are removed, and does mere predictability imply a disparity?
 - Do similarity-based screens favor candidates who resemble the reference population?
@@ -60,6 +60,23 @@ The structured modeling notebooks use a canonical feature list from `src/feature
 
 Supervised model, fairness, ablation, and age-predictability results use the common **40,000 / 10,000 train/test split**. The structured-similarity, full-text, and external-validation notebooks use separate applicant/reference pools described in their sections.
 
+### Shared code (`src/`)
+
+The notebooks rely on a small set of shared modules so core definitions are centralized rather than duplicated.
+
+| Module | Provides |
+|---|---|
+| `src/paths.py` | Project-root–anchored directory constants (`BASELINE_DIR`, `EXPERIMENTS_DIR`, `EMBEDDINGS_DIR`, `TABLES_DIR`, …) and `rel()` for repo-relative path printing. |
+| `src/features.py` | The canonical 51-feature list, the proxy cluster, `AGE_ORDER`, and schema validators (`validate_features`). |
+| `src/metrics.py` | `wilson_ci` and `mean_ci`. |
+| `src/preprocessing.py` | `split_feature_types` / `make_preprocessor` — the sklearn preprocessing shared by all structured models. |
+| `src/models.py` | `make_baseline_models` (logistic regression + histogram gradient boosting with fixed seeds). |
+| `src/data_generation.py` | The synthetic generator, `load_or_generate` caching, and `dataset_fingerprint` provenance hashing. |
+| `src/fulltext.py` | Full-text corpus loading with fingerprint verification, the faithfulness and text-leakage gates, and the constants notebooks 07–08 must agree on (`MODES`, `FOCAL_MODE`, `TRUE_PROPORTIONS`, `SCREEN_RATE`). |
+| `src/embedding.py` | The shared `Embedder` (OpenAI / `bge-m3`) with on-disk caching keyed by backend, model, and content hash, plus an explicit API-spend guard. |
+| `src/data_processing/cps_processing.py` | CPS extract standardization and the unemployment summaries used in notebook 00. |
+| `src/llm_resume_generation.py` | Renders the structured résumés into the three full-text corpora — the expensive LLM layer; run deliberately, not as part of routine re-execution. |
+
 ---
 
 ## Real-World Labor Market Context
@@ -71,8 +88,9 @@ To ground the project, U.S. labor-market data was analyzed using the Current Pop
 - Data source: IPUMS CPS Basic Monthly
 - Source window: January 2010 through April 2026
 - Population: individuals aged 18+; career-stage summaries use 22+
-- Weighting: CPS person weights (`WTFINL`)
-- Unemployment definition: `EMPSTAT ∈ {20, 21, 22}`
+- Weighting: CPS person weights (`WTFINL`); records with `WTFINL ≤ 0` are dropped, which excludes ASEC supplement rows from the monthly series
+- Unemployment definition: `EMPSTAT ∈ {21, 22}` (looking for work / on layoff; code 20 does not occur in the Basic Monthly extract)
+- Rate denominator: the labor force (`EMPSTAT ∈ {10, 12, 20, 21, 22}`), not the full population
 - Unemployment duration: `DURUNEMP` in weeks
 - Trend years: full calendar years 2010–2025
 - 2026 treatment: January–April 2026 is partial-year context only, not a comparable annual trend point
@@ -92,6 +110,8 @@ Mean unemployment **duration** rises monotonically with age, even though the une
 ![Smoothed unemployment duration by age group](reports/figures/unemployment_duration_age_group_smoothed.png)
 
 *Figure 1. Smoothed unemployment duration by age group. Older workers face longer re-employment durations across most years.*
+
+A note on binning: the CPS summaries use four age bands (`<30`, `30-39`, `40-49`, `50+`; career-stage bins 22–32, 33–42, 43–52, 53+), while the synthetic experiments use five bands that split `50-59` from `60+`. The CPS `50+` band is therefore not directly comparable to the synthetic `60+` band.
 
 This CPS analysis is **not** tech-sector-specific. Occupation is not reliably defined for unemployed individuals in CPS, so the CPS section provides broad labor-market context rather than causal evidence about technical hiring or résumé-screening systems. The experiments below test whether screening mechanisms can reproduce age-related disparities through proxy features and reference-population effects.
 
@@ -188,7 +208,9 @@ modern_tech_count
 salary_expectation_usd
 ```
 
-An incremental ablation makes the redundancy explicit. Dropping proxies one at a time leaves the gap near 0.58 through most of the sequence; it only collapses after the full cluster is removed. This fixed-order sweep is diagnostic, not a formal causal feature-importance ranking. No single feature should be described as solely responsible.
+`salary_expectation_usd` is a synthetic screening feature used for mechanism testing, not a claim that salary expectations are always present in real résumé text.
+
+An incremental ablation makes the redundancy explicit. The gap holds near 0.58 through the first seven removals, steps down when `most_recent_title` is removed (0.56 → 0.44), and collapses only once `salary_expectation_usd` — the last strong proxy — is also dropped. `most_recent_title` and `salary_expectation_usd` carry disproportionate marginal weight, though neither is individually sufficient. This fixed-order sweep is diagnostic, not a formal causal feature-importance ranking. No single feature should be described as solely responsible.
 
 ![Ablation: predicted selection rate by age](reports/figures/ablation_predicted_rate_by_age.png)
 
@@ -229,7 +251,7 @@ Age is exactly as predictable where there is no callback disparity. Predictabili
 
 *Figure 7. Similarity screening favors candidates who resemble the reference population. The direction is a property of the reference, not only the résumés.*
 
-Applicants were scored by cosine similarity to a structured reference pool, with no training labels. Against a synthetic mid-career “successful employee” reference pool (**R1**) that is 100% under 50 by construction, similarity falls steeply with age and the oldest bands are effectively screened out:
+Applicants were scored by cosine similarity to a structured reference pool, with no training labels. Against a synthetic mid-career “successful employee” template/reference pool (**R1**) that is 100% under 50 by construction, similarity falls steeply with age and the oldest bands are effectively screened out:
 
 | Age group | Similarity vs R1, mid-career | Screen-pass rate vs R1 | Similarity vs R2, age-balanced |
 |---|---:|---:|---:|
@@ -253,7 +275,7 @@ A matched-pair check — building a “senior” variant by pushing every featur
 
 Structured résumés were rendered into full text under factual-preservation constraints. A faithfulness and text-cleanliness audit checks for placeholder artifacts, leaked field codes, and explicit age language. The downstream screening analysis excludes **74** text-flagged rows from the rendered corpus. The full-text corpus contains 12,500 résumés per generation mode before filtering.
 
-Scoring the same résumés against a ladder of job descriptions, the favored age band rises with the JD’s seniority:
+Scoring the same résumés against a ladder of job descriptions, the favored age band shifts from early/mid-career toward older groups as the JD’s seniority rises:
 
 | Job description | Favored highest-similarity age band |
 |---|---|
@@ -277,7 +299,7 @@ The similarity gradient is partly correlated with résumé length (`r = 0.20`) b
 
 ![JD seniority sweep](reports/figures/nlp07_jd_seniority_sweep.png)
 
-*Figure 9. The favored age band moves up the age range as the job description becomes more senior.*
+*Figure 9. The favored age band shifts from early/mid-career toward older groups as the job description becomes more senior.*
 
 This section is an important counterweight to the structured callback model. The same résumés that the engineering-manager JD screen favors with age are penalized with age by the structured callback model. Opposite gradients on the same candidate population show that the screening target helps determine the direction of the disparity.
 
@@ -285,7 +307,7 @@ This section is an important counterweight to the structured callback model. The
 
 ## Experiment F — Full-Text Incumbent Similarity and Embedding Anisotropy
 
-Notebook 08 scores full-text synthetic résumés against incumbent/reference profiles, swapping a mid-career reference pool (**R1**, again 100% under 50) for an age-balanced reference pool (**R2**). This experiment is partly methodological.
+Notebook 08 scores full-text synthetic résumés against incumbent/reference profiles, swapping a mid-career reference pool (**R1**, a mid-career pool that is 100% under 50 by construction) for an age-balanced reference pool (**R2**). This experiment is partly methodological.
 
 ### Raw cosine mostly washes out the reference swap
 
@@ -425,17 +447,27 @@ The practical implication is that dropping protected attributes or one obvious p
 
 ## Reproducing the Analysis
 
+### Environment
+
+Python 3 with `pandas`, `numpy`, `scikit-learn`, `pyarrow`, `matplotlib`, `openai`, and `tiktoken`; `sentence-transformers` is needed only for the optional `bge-m3` robustness pass. `OPENAI_API_KEY` is required only when re-embedding with `allow_api=True`; all executed results re-run from the on-disk embedding caches without it.
+
 ### CPS data: Notebook 00
 
-The CPS extract is not included due to size. Create an account at IPUMS CPS, extract Basic Monthly CPS with variables `AGE`, `EMPSTAT`, `DURUNEMP`, `OCC2010`, `WTFINL`, `YEAR`, and `MONTH`, save the extract under `data/raw/ipums_cps/`, then run `00_cps_data_prep.ipynb`.
+The CPS extract is not included due to size. Create an account at IPUMS CPS, extract Basic Monthly CPS with variables `AGE`, `EMPSTAT`, `DURUNEMP`, `OCC2010`, `WTFINL`, `YEAR`, and `MONTH`, save the extract as `data/external/cps_extract.csv`, then run `00_cps_data_prep.ipynb`. ASEC supplement rows are removed automatically (the `WTFINL > 0` filter), and years before 2010 are excluded.
 
 ### Structured experiments: Notebooks 01–06
 
-Run `01_data_generation.ipynb` first. It produces the 50,000-row synthetic résumé dataset and associated label/bias-setting artifacts. Then run `02_model_training.ipynb` through `06_similarity_screening_experiment.ipynb` in order. Structured modeling notebooks consume the canonical feature list from `src/features.py`.
+Run `01_data_generation.ipynb` first. It produces the 50,000-row synthetic résumé dataset and associated label/bias-setting artifacts. Then run `02_model_training.ipynb` through `06_similarity_screening_experiment.ipynb` in order. Structured modeling notebooks consume the canonical feature list from `src/features.py`. Re-running `01_data_generation.ipynb` is non-destructive by default: existing datasets are loaded rather than regenerated, and a stored fingerprint is compared against the data on disk; set `FORCE_REGENERATE = True` to rebuild deliberately.
 
 ### Full-text experiments: Notebooks 07–08
 
-Notebooks 07–08 use cached embeddings of the generated full-text résumé corpus. The executed runs use OpenAI `text-embedding-3-small`. Re-running these notebooks may require the cached embedding parquet files or API access, depending on the notebook settings.
+Two distinct artifact layers are involved.
+
+**The corpus** — `data/experiments/synthetic_resumes_fulltext_{with_proxies,without_direct_age_proxies,minimal_proxy}.parquet` — is the expensive LLM-generated layer (12,500 résumés per mode) and is treated strictly as a read-only input by 07–08. It is produced by `src/llm_resume_generation.py`. The blessed corpus fingerprints live in `data/experiments/fulltext_fingerprints.json`; both notebooks verify them on load and warn loudly if the corpus on disk has changed.
+
+**The embeddings** — `.npy` files under `data/experiments/embeddings/`, keyed by backend, model, and a content hash of the texts. The executed runs use OpenAI `text-embedding-3-small`. With the cached files present, 07–08 re-run completely offline: no API key, no spend. The shared `Embedder` defaults to `allow_api=False`, so a cache miss raises an error instead of silently re-embedding; to deliberately (re)embed — e.g. for the `bge-m3` robustness pass — construct `Embedder(..., allow_api=True)` (and set `OPENAI_API_KEY` for the OpenAI backend).
+
+Run 07 before 08: notebook 08’s two-target contrast reads 07’s scored output (`synthetic_resumes_fulltext_scored_openai.parquet`). Each scored parquet is saved with a `.meta.json` sidecar recording the embedder, model, and input fingerprints.
 
 ### External experiment: Notebook 09
 
@@ -445,7 +477,7 @@ Notebook 09 uses the Kaggle Resume Dataset. Save the CSV as:
 data/external/resume_dataset.csv
 ```
 
-Then run `09_external_resume_career_stage_validation.ipynb`.
+Then run `09_external_resume_career_stage_validation.ipynb`. The executed run uses a 9,000-row corpus with `category` / `job_title` / `Text` columns [Kaggle's Resume Dataset](https://www.kaggle.com/datasets/haidermaseeh/resume-dataset); the loader auto-maps common column-name variants. Embedding caching and the `allow_api` spend guard work exactly as in notebooks 07–08, and the saved `ext09_external_scored.parquet` carries a `.meta.json` sidecar recording a SHA-256 of the source CSV.
 
 ---
 
@@ -491,5 +523,17 @@ reports/tables/ext09_jd_similarity_by_stage.csv
 reports/tables/ext09_jd_screen_rates.csv
 reports/tables/ext09_incumbent_swap_centered_balanced.csv
 ```
+
+Provenance and protection artifacts:
+
+```text
+data/experiments/fulltext_fingerprints.json
+data/experiments/synthetic_resumes_fulltext_scored_openai.meta.json
+data/experiments/nlp08_incumbent_scored_openai.meta.json
+data/experiments/ext09_external_scored.meta.json
+data/experiments/MANIFEST.sha256
+```
+
+`MANIFEST.sha256` pins the three full-text corpus parquets and the embedding caches; verify from the repository root with `sha256sum -c data/experiments/MANIFEST.sha256`.
 
 Notebook 09's results are reported as tables rather than figures.
