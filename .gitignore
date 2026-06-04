@@ -109,3 +109,9 @@ models/
 # Allow small tables if any
 
 !reports/tables/
+data/external/
+data/interim/
+data/experiments/embeddings/
+data/experiments/*smoketest*
+data/experiments/candidate_fulltext_*
+data/experiments/resume_text_input_*
